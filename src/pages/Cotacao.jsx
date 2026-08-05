@@ -7,7 +7,9 @@ import {
   criarVolumeVazio,
   volumeLinhaValido,
 } from './cotacaoVolumes'
+import { Link } from 'react-router-dom'
 import { authFetch } from '../lib/authFetch'
+import { useAuth } from '../context/AuthContext'
 import './Cotacao.css'
 
 const INITIAL_FORM = {
@@ -64,6 +66,7 @@ function ToggleGroup({ label, value, onChange, yesLabel = 'Sim', noLabel = 'Não
 }
 
 function Cotacao() {
+  const { user, loading: authLoading, canUseCotacao, profileComplete, isRejected } = useAuth()
   const [form, setForm] = useState(INITIAL_FORM)
   const [volumes, setVolumes] = useState([criarVolumeVazio()])
   const [mercadorias, setMercadorias] = useState([{ codigo: 1, descricao: 'DIVERSOS' }])
@@ -120,6 +123,11 @@ function Cotacao() {
     setResultado(null)
     setColetaAberta(false)
     setColetaGerada(null)
+
+    if (user && !canUseCotacao) {
+      setErro('Complete seus dados no painel e aguarde a aprovação para cotar.')
+      return
+    }
 
     if (!isValidCpfCnpj(form.cnpjPagador)) {
       setErro('Informe um CPF (11 dígitos) ou CNPJ (14 dígitos) do pagador.')
@@ -190,6 +198,29 @@ function Cotacao() {
 
   function abrirColeta() {
     setColetaAberta(true)
+  }
+
+  if (!authLoading && user && !canUseCotacao) {
+    return (
+      <div className="cotacao-page">
+        <p className="cotacao-kicker">Cotação online</p>
+        <section className="form-section cotacao-bloqueio">
+          <h2>Acesso às cotações</h2>
+          {isRejected ? (
+            <p>Sua conta foi recusada. Fale com o administrador Jetlu.</p>
+          ) : (
+            <p>
+              {profileComplete
+                ? 'Seus dados já foram enviados. Aguarde a aprovação do master para calcular fretes.'
+                : 'Para usar as cotações, preencha no painel: nome completo, endereço, CPF, CNPJ, telefone da conta e WhatsApp.'}
+            </p>
+          )}
+          <Link to="/painel" className="cotacao-bloqueio-link">
+            Ir para o painel
+          </Link>
+        </section>
+      </div>
+    )
   }
 
   return (

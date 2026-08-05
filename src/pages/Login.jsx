@@ -6,7 +6,7 @@ import './AuthPages.css'
 function Login() {
   const { configured, user, loading, signIn, signUp } = useAuth()
   const location = useLocation()
-  const redirectTo = location.state?.from || '/historico'
+  const redirectTo = location.state?.from || '/painel'
   const [modo, setModo] = useState('entrar')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -32,7 +32,9 @@ function Login() {
         const { data, error } = await signUp(email.trim(), password)
         if (error) throw error
         if (!data.session) {
-          setInfo('Conta criada. Se o e-mail de confirmação estiver ativo, verifique sua caixa de entrada.')
+          setInfo('Conta criada. Confirme o e-mail, entre no painel e complete seus dados para liberar as cotações.')
+        } else {
+          setInfo('Conta criada. Complete seus dados no painel para solicitar o acesso às cotações.')
         }
       }
     } catch (error) {
@@ -48,7 +50,7 @@ function Login() {
         <p className="auth-kicker">{modo === 'entrar' ? 'Acesso' : 'Cadastro'}</p>
         <h1>{modo === 'entrar' ? 'Entrar na conta' : 'Criar conta'}</h1>
         <p className="auth-copy">
-          Com login, cotações e coletas ficam salvas no seu histórico.
+          Após criar a conta, entre normalmente no painel e preencha seus dados. As cotações são liberadas depois da aprovação do master.
         </p>
 
         {!configured && (

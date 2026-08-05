@@ -9,9 +9,9 @@
   position: sticky;
   top: 0;
   z-index: 20;
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
   gap: 16px;
   width: 100%;
   padding: 10px 24px;
@@ -19,37 +19,10 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.auth-nav {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-}
-
-.auth-nav-email {
-  max-width: 160px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: rgba(255, 255, 255, 0.72);
-  font-size: 12px;
-}
-
-.auth-nav-link {
-  border: 0;
-  background: transparent;
-  color: #fff;
-  font: inherit;
-  font-size: 13px;
-  font-weight: 700;
-  text-decoration: none;
-  white-space: nowrap;
-  cursor: pointer;
-}
-
 .app-brand {
   display: flex;
   align-items: center;
+  justify-self: start;
   text-decoration: none;
 }
 
@@ -61,9 +34,9 @@
 
 .tabs {
   display: flex;
-  flex: 0 1 auto;
+  justify-self: center;
   width: auto;
-  max-width: calc(100vw - 180px);
+  max-width: min(720px, calc(100vw - 48px));
   height: 44px;
   padding: 4px;
   box-sizing: border-box;
@@ -118,20 +91,18 @@
 
 @media (max-width: 640px) {
   .app-header {
-    flex-direction: column;
-    align-items: stretch;
+    grid-template-columns: 1fr;
+    justify-items: center;
     padding: 12px 16px;
+  }
+
+  .app-brand {
+    justify-self: center;
   }
 
   .tabs {
     width: 100%;
     max-width: none;
-    flex: 1 1 auto;
-  }
-
-  .auth-nav,
-  .auth-nav-link {
-    align-self: flex-end;
   }
 
   .tab {

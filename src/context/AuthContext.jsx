@@ -1,11 +1,37 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { supabase, supabaseConfigured } from '../lib/supabase'
+import { isMasterEmail } from '../lib/master'
+import { isProfileComplete } from '../lib/profile'
 
 const AuthContext = createContext(null)
 
+async function loadProfile(userId) {
+  const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle()
+  if (error) throw error
+  return data
+}
+
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null)
+  const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
+
+  const refreshProfile = useCallback(async (userId) => {
+    if (!userId) {
+      setProfile(null)
+      return null
+    }
+
+    try {
+      const nextProfile = await loadProfile(userId)
+      setProfile(nextProfile)
+      return nextProfile
+    } catch (error) {
+      console.error('Erro ao carregar perfil:', error.message)
+      setProfile(null)
+      return null
+    }
+  }, [])
 
   useEffect(() => {
     if (!supabaseConfigured) {
@@ -13,29 +39,48 @@ export function AuthProvider({ children }) {
       return undefined
     }
 
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session ?? null)
+    supabase.auth.getSession().then(async ({ data }) => {
+      const nextSession = data.session ?? null
+      setSession(nextSession)
+      await refreshProfile(nextSession?.user?.id)
       setLoading(false)
     })
 
     const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       setSession(nextSession)
+      refreshProfile(nextSession?.user?.id)
     })
 
     return () => data.subscription.unsubscribe()
-  }, [])
+  }, [refreshProfile])
+
+  const user = session?.user ?? null
+  const isMaster = profile?.role === 'master' || isMasterEmail(user?.email)
+  const isApproved = profile?.status === 'approved' || isMaster
+  const isPending = Boolean(user) && !isApproved && profile?.status !== 'rejected'
+  const isRejected = profile?.status === 'rejected'
+  const profileComplete = isMaster || isProfileComplete(profile)
+  const canUseCotacao = Boolean(user) && !isRejected && isApproved && profileComplete
 
   const value = useMemo(
     () => ({
       configured: supabaseConfigured,
       session,
-      user: session?.user ?? null,
+      user,
+      profile,
       loading,
+      isMaster,
+      isApproved,
+      isPending,
+      isRejected,
+      profileComplete,
+      canUseCotacao,
+      refreshProfile: () => refreshProfile(user?.id),
       signIn: (email, password) => supabase.auth.signInWithPassword({ email, password }),
       signUp: (email, password) => supabase.auth.signUp({ email, password }),
       signOut: () => supabase.auth.signOut(),
     }),
-    [session, loading],
+    [session, user, profile, loading, isMaster, isApproved, isPending, isRejected, profileComplete, canUseCotacao, refreshProfile],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
