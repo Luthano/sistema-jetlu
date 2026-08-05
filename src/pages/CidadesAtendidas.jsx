@@ -11,9 +11,8 @@ import {
   matchCity,
   onlyDigits,
 } from './cidadesBusca'
+import { UFS_ATENDIDAS } from '../lib/ufsAtendidas'
 import './CidadesAtendidas.css'
-
-const UFS = ['BA', 'GO', 'MS', 'MT', 'PA', 'PE', 'PR', 'RS', 'SC', 'SP']
 
 function CidadesAtendidas() {
   const [cep, setCep] = useState('')
@@ -153,7 +152,7 @@ function CidadesAtendidas() {
                   }}
                 >
                   <option value="">UF</option>
-                  {UFS.map((item) => (
+                  {UFS_ATENDIDAS.map((item) => (
                     <option key={item} value={item}>
                       {item}
                     </option>

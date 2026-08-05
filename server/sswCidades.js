@@ -1,7 +1,9 @@
+import { UFS_ATENDIDAS } from '../src/lib/ufsAtendidas.js'
+
 const CACHE_TTL_MS = 15 * 60 * 1000
 const cache = new Map()
 
-export const UFS_ATENDIDAS = ['BA', 'GO', 'MS', 'MT', 'PA', 'PE', 'PR', 'RS', 'SC', 'SP']
+export { UFS_ATENDIDAS }
 
 const UF_PESQUISA = {
   AL: '(AL)ALAGOAS',
@@ -130,6 +132,15 @@ export async function listarCidadesPorUf(ufRaw) {
   const uf = normalizeUf(ufRaw)
   if (!/^[A-Z]{2}$/.test(uf)) {
     throw new Error('Informe uma UF válida.')
+  }
+  if (!UFS_ATENDIDAS.includes(uf)) {
+    return {
+      sucesso: true,
+      uf,
+      total: 0,
+      cidades: [],
+      mensagem: `A Jetlu não lista cobertura para ${uf} neste sistema.`,
+    }
   }
 
   const cached = cache.get(uf)
