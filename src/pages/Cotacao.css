@@ -595,7 +595,6 @@
 
   .cotacao-aside {
     position: static;
-    order: -1;
   }
 
   .volume-grid {
