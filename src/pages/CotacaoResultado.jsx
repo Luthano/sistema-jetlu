@@ -63,7 +63,7 @@ function CotacaoResultado({
           </div>
           <div>
             <small>Nº cotação</small>
-            <strong>{resultado.numeroCotacao || '—'}</strong>
+            <strong>{resultado.simulacao ? 'Simulação' : resultado.numeroCotacao || '—'}</strong>
           </div>
           {resultado.enviado?.peso ? (
             <div>
@@ -95,12 +95,17 @@ function CotacaoResultado({
               <span>{formatMoney(resultado.enviado.valorNF)}</span>
             </li>
           </ul>
-          {resultado.numeroCotacao && (
+          {resultado.simulacao ? (
+            <p className="resultado-nota">
+              Esta é só uma simulação. Entre na conta aprovada para gravar o número no SSW e
+              solicitar coleta.
+            </p>
+          ) : resultado.numeroCotacao ? (
             <p className="resultado-nota">
               Cotação <strong>{resultado.numeroCotacao}</strong> gravada no SSW. Use este
               número para a coleta.
             </p>
-          )}
+          ) : null}
         </div>
       )}
 
@@ -118,7 +123,7 @@ function CotacaoResultado({
         </div>
       )}
 
-      {!coletaAberta && (
+      {!coletaAberta && !resultado.simulacao && resultado.numeroCotacao && (
         <div className="resultado-coleta-actions">
           {numeroColeta ? (
             <p className="coleta-numero-inline">

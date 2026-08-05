@@ -210,9 +210,43 @@
   .cidades-map-grid,
   .cidades-map-search {
     grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .cidades-map-copy h1 {
+    max-width: none;
+    font-size: 1.45rem;
   }
 
   .cidades-cta {
     width: 100%;
+  }
+
+  .cidades-resultado {
+    margin-top: 24px;
+  }
+
+  .cidades-lista {
+    grid-template-columns: 1fr;
+    padding: 14px;
+  }
+
+  .mapa-brasil {
+    max-width: 100%;
+    order: 2;
+  }
+}
+
+@media (max-width: 640px) {
+  .cidades-map-grid {
+    gap: 20px;
+  }
+
+  .cidades-status {
+    padding: 14px 16px;
+  }
+
+  .cidades-resultado h2 {
+    font-size: 1.15rem;
   }
 }

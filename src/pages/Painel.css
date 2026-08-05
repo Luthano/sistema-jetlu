@@ -247,4 +247,26 @@
     display: grid;
     grid-template-columns: 1fr;
   }
+
+  .painel-wrap {
+    border-radius: 16px;
+    padding: 18px 16px;
+  }
+
+  .painel-head {
+    align-items: stretch;
+    margin-bottom: 16px;
+  }
+
+  .painel-sair,
+  .painel-edit,
+  .painel-cancel,
+  .painel-danger-btn,
+  .painel-cadastro .auth-submit {
+    width: 100%;
+  }
+
+  .painel-card {
+    min-height: 96px;
+  }
 }

@@ -32,7 +32,8 @@
   cursor: pointer;
 }
 
-.mapa-brasil #svg-map a:hover path {
+.mapa-brasil #svg-map a:hover path,
+.mapa-brasil #svg-map a.is-selected path {
   fill: #062855 !important;
   filter: drop-shadow(0 0 6px rgba(6, 40, 85, 0.25));
 }
@@ -41,6 +42,7 @@
   fill: #f80050;
 }
 
-.mapa-brasil #svg-map a:hover .circle {
+.mapa-brasil #svg-map a:hover .circle,
+.mapa-brasil #svg-map a.is-selected .circle {
   fill: #003399 !important;
 }

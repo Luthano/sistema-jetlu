@@ -149,6 +149,16 @@
 }
 
 @media (max-width: 720px) {
+  .auth-page {
+    padding: 20px 12px 40px;
+  }
+
+  .auth-card,
+  .historico-wrap {
+    border-radius: 16px;
+    padding: 18px 16px;
+  }
+
   .historico-head {
     flex-direction: column;
     align-items: stretch;
@@ -156,5 +166,10 @@
 
   .historico-list li {
     grid-template-columns: 1fr;
+  }
+
+  .auth-submit,
+  .auth-switch {
+    width: 100%;
   }
 }

@@ -2,11 +2,11 @@ import dotenv from 'dotenv'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import express from 'express'
-import { getMercadorias } from './sswClient.js'
+import { cotar as cotarSimulacao, getMercadorias } from './sswClient.js'
 import { rastrearPorDanfe, rastrearPorDocumento } from './sswTracking.js'
-import { cotar, solicitarColeta } from './sswCotacaoColeta.js'
+import { cotar as cotarOficial, solicitarColeta } from './sswCotacaoColeta.js'
 import { buscarCidadesPorNome, listarCidadesPorUf } from './sswCidades.js'
-import { salvarColetaHistorico, salvarCotacaoHistorico } from './supabase.js'
+import { podePersistirCotacao, salvarColetaHistorico, salvarCotacaoHistorico } from './supabase.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 dotenv.config({ path: path.resolve(__dirname, '../.env') })
@@ -98,6 +98,15 @@ app.post('/api/rastreio', async (req, res) => {
 
 app.post('/api/coleta', async (req, res) => {
   try {
+    const podeColetar = await podePersistirCotacao(req)
+    if (!podeColetar) {
+      return res.status(401).json({
+        sucesso: false,
+        mensagem: 'Entre com uma conta aprovada para solicitar coleta.',
+        numeroColeta: '',
+      })
+    }
+
     const body = req.body || {}
     const required = ['solicitante', 'limiteColeta', 'cotacao', 'token']
     const missing = required.filter((field) => !body[field] && body[field] !== 0)
@@ -139,17 +148,23 @@ app.post('/api/cotacao', async (req, res) => {
       })
     }
 
-    const result = await cotar(body)
+    const persistir = await podePersistirCotacao(req)
+    const result = persistir ? await cotarOficial(body) : await cotarSimulacao(body)
 
     if (result.erro < 0) {
       return res.status(400).json(result)
     }
 
-    if (result.sucesso) {
+    if (persistir && result.sucesso) {
       await salvarCotacaoHistorico(req, body, result)
     }
 
-    return res.json(result)
+    return res.json({
+      ...result,
+      simulacao: !persistir,
+      numeroCotacao: persistir ? result.numeroCotacao : '',
+      token: persistir ? result.token : undefined,
+    })
   } catch (error) {
     console.error('Erro cotar:', error)
     return res.status(500).json({

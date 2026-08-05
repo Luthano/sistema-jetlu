@@ -261,4 +261,15 @@
   .user-card-actions {
     justify-content: flex-start;
   }
+
+  .user-card-actions {
+    display: grid;
+    gap: 8px;
+  }
+
+  .user-card-actions button,
+  .user-card-actions .painel-edit,
+  .user-card-actions .painel-danger-btn {
+    width: 100%;
+  }
 }

@@ -620,4 +620,26 @@
   .volume-grid {
     grid-template-columns: 1fr;
   }
+
+  .form-section {
+    padding: 16px;
+  }
+
+  .aside-card {
+    position: static;
+  }
+
+  .btn-primary,
+  .btn-coleta {
+    width: 100%;
+  }
+
+  .cotacao-bloqueio-link {
+    width: 100%;
+    text-align: center;
+  }
+
+  .cotacao-kicker {
+    margin-bottom: 12px;
+  }
 }

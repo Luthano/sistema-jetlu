@@ -11,11 +11,11 @@ import Painel from './pages/Painel'
 import './App.css'
 
 const TABS = [
-  { to: '/', label: 'Home' },
-  { to: '/cotacao', label: 'Cotação' },
-  { to: '/rastrear', label: 'Rastrear' },
-  { to: '/cidades-atendidas', label: 'Cidades atendidas' },
-  { to: '/painel', label: 'Painel' },
+  { to: '/', label: 'Home', short: 'Home' },
+  { to: '/cotacao', label: 'Cotação', short: 'Cotação' },
+  { to: '/rastrear', label: 'Rastrear', short: 'Rastrear' },
+  { to: '/cidades-atendidas', label: 'Cidades atendidas', short: 'Cidades' },
+  { to: '/painel', label: 'Painel', short: 'Painel' },
 ]
 
 function isTabActive(pathname, to) {
@@ -35,13 +35,34 @@ function ScrollToTop() {
 
 function AppHeader({ scrolled }) {
   const { pathname } = useLocation()
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  useEffect(() => {
+    setMenuOpen(false)
+  }, [pathname])
+
+  useEffect(() => {
+    if (!menuOpen) return undefined
+
+    function onKeyDown(event) {
+      if (event.key === 'Escape') setMenuOpen(false)
+    }
+
+    document.body.style.overflow = 'hidden'
+    window.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.body.style.overflow = ''
+      window.removeEventListener('keydown', onKeyDown)
+    }
+  }, [menuOpen])
 
   return (
-    <header className={`app-header ${scrolled ? 'is-scrolled' : ''}`}>
+    <header className={`app-header ${scrolled ? 'is-scrolled' : ''} ${menuOpen ? 'is-menu-open' : ''}`}>
       <Link to="/" className="app-brand">
         <img className="app-brand-logo" src="/home/logo-jetlu.svg" alt="Jetlu" />
       </Link>
-      <nav className="tabs" aria-label="Navegação principal">
+
+      <nav className="tabs tabs-desktop" aria-label="Navegação principal">
         {TABS.map((tab) => {
           const active = isTabActive(pathname, tab.to)
           return (
@@ -49,6 +70,46 @@ function AppHeader({ scrolled }) {
               key={tab.to}
               to={tab.to}
               className={active ? 'tab is-active' : 'tab'}
+              aria-current={active ? 'page' : undefined}
+            >
+              {tab.label}
+            </Link>
+          )
+        })}
+      </nav>
+
+      <button
+        type="button"
+        className={`menu-toggle ${menuOpen ? 'is-open' : ''}`}
+        aria-expanded={menuOpen}
+        aria-controls="menu-mobile"
+        aria-label={menuOpen ? 'Fechar menu' : 'Abrir menu'}
+        onClick={() => setMenuOpen((prev) => !prev)}
+      >
+        <span />
+        <span />
+        <span />
+      </button>
+
+      <div
+        className={`menu-backdrop ${menuOpen ? 'is-open' : ''}`}
+        aria-hidden={!menuOpen}
+        onClick={() => setMenuOpen(false)}
+      />
+
+      <nav
+        id="menu-mobile"
+        className={`menu-mobile ${menuOpen ? 'is-open' : ''}`}
+        aria-label="Menu mobile"
+        aria-hidden={!menuOpen}
+      >
+        {TABS.map((tab) => {
+          const active = isTabActive(pathname, tab.to)
+          return (
+            <Link
+              key={tab.to}
+              to={tab.to}
+              className={active ? 'menu-mobile-link is-active' : 'menu-mobile-link'}
               aria-current={active ? 'page' : undefined}
             >
               {tab.label}

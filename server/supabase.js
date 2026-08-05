@@ -37,7 +37,20 @@ export async function getAuthedSupabase(req) {
   const { data, error } = await client.auth.getUser(token)
   if (error || !data.user) return null
 
-  return { client, userId: data.user.id }
+  return { client, userId: data.user.id, email: data.user.email }
+}
+
+export async function podePersistirCotacao(req) {
+  const auth = await getAuthedSupabase(req)
+  if (!auth) return false
+
+  const { data: profile } = await auth.client
+    .from('profiles')
+    .select('status, role')
+    .eq('id', auth.userId)
+    .maybeSingle()
+
+  return profile?.role === 'master' || profile?.status === 'approved'
 }
 
 export async function salvarCotacaoHistorico(req, body, result) {

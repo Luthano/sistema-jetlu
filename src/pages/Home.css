@@ -564,6 +564,10 @@
 }
 
 @media (max-width: 900px) {
+  .landing-wrap {
+    width: min(1180px, calc(100% - 24px));
+  }
+
   .landing-diff-grid,
   .landing-diff-cards,
   .landing-cards,
@@ -584,11 +588,29 @@
   }
 
   .landing-hero-content {
-    padding-bottom: 48px;
+    width: min(1180px, calc(100% - 24px));
+    padding: 56px 0 40px;
+  }
+
+  .landing-hero-bg {
+    object-position: center center;
   }
 
   .landing-banner-cta-inner {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .landing-hero-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .landing-cta,
+  .landing-cta-light,
+  .landing-cta-outline {
+    width: 100%;
+    justify-content: center;
+    box-sizing: border-box;
   }
 }

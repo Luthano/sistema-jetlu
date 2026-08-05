@@ -421,9 +421,6 @@ function Cotacao() {
             <button type="submit" className="btn-primary" disabled={loading}>
               {loading ? 'Calculando frete…' : 'Simular cotação'}
             </button>
-            <p className="aside-note">
-              Essa cotação é registrada no SSW com número e token para a coleta.
-            </p>
           </div>
         </aside>
       </form>
