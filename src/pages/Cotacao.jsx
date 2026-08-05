@@ -7,6 +7,7 @@ import {
   criarVolumeVazio,
   volumeLinhaValido,
 } from './cotacaoVolumes'
+import { authFetch } from '../lib/authFetch'
 import './Cotacao.css'
 
 const INITIAL_FORM = {
@@ -86,7 +87,7 @@ function Cotacao() {
     const timer = setTimeout(async () => {
       setLoadingMercadorias(true)
       try {
-        const res = await fetch(`/api/mercadorias?cnpjPagador=${documento}`)
+        const res = await authFetch(`/api/mercadorias?cnpjPagador=${documento}`)
         const data = await res.json()
         if (data.mercadorias?.length) {
           setMercadorias(data.mercadorias)
@@ -150,9 +151,8 @@ function Cotacao() {
     setLoading(true)
 
     try {
-      const res = await fetch('/api/cotacao', {
+      const res = await authFetch('/api/cotacao', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...form,
           valorNF: Number(form.valorNF),
@@ -352,6 +352,8 @@ function Cotacao() {
                 <CotacaoColetaForm
                   quoteForm={form}
                   totais={totais}
+                  cotacao={resultado.numeroCotacao}
+                  token={resultado.token}
                   locked={Boolean(coletaGerada?.numeroColeta)}
                   numeroColeta={coletaGerada?.numeroColeta}
                   onSuccess={setColetaGerada}
@@ -386,7 +388,7 @@ function Cotacao() {
               {loading ? 'Calculando frete…' : 'Simular cotação'}
             </button>
             <p className="aside-note">
-              Essa é uma cotação genérica com valores aproximados.
+              Essa cotação é registrada no SSW com número e token para a coleta.
             </p>
           </div>
         </aside>

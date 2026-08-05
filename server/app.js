@@ -2,10 +2,11 @@ import dotenv from 'dotenv'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import express from 'express'
-import { cotar, getMercadorias } from './sswClient.js'
+import { getMercadorias } from './sswClient.js'
 import { rastrearPorDanfe, rastrearPorDocumento } from './sswTracking.js'
-import { solicitarColeta } from './sswColeta.js'
+import { cotar, solicitarColeta } from './sswCotacaoColeta.js'
 import { buscarCidadesPorNome, listarCidadesPorUf } from './sswCidades.js'
+import { salvarColetaHistorico, salvarCotacaoHistorico } from './supabase.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 dotenv.config({ path: path.resolve(__dirname, '../.env') })
@@ -97,7 +98,7 @@ app.post('/api/rastreio', async (req, res) => {
 app.post('/api/coleta', async (req, res) => {
   try {
     const body = req.body || {}
-    const required = ['solicitante', 'tipoPagamento', 'cepEntrega', 'limiteColeta', 'quantidade', 'peso']
+    const required = ['solicitante', 'limiteColeta', 'cotacao', 'token']
     const missing = required.filter((field) => !body[field] && body[field] !== 0)
 
     if (missing.length > 0) {
@@ -109,6 +110,9 @@ app.post('/api/coleta', async (req, res) => {
     }
 
     const result = await solicitarColeta(body)
+    if (result.sucesso) {
+      await salvarColetaHistorico(req, body, result)
+    }
     return res.status(result.sucesso ? 200 : 400).json(result)
   } catch (error) {
     console.error('Erro coleta:', error)
@@ -138,6 +142,10 @@ app.post('/api/cotacao', async (req, res) => {
 
     if (result.erro < 0) {
       return res.status(400).json(result)
+    }
+
+    if (result.sucesso) {
+      await salvarCotacaoHistorico(req, body, result)
     }
 
     return res.json(result)

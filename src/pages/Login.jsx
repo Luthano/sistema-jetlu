@@ -1,0 +1,113 @@
+import { useState } from 'react'
+import { Link, Navigate, useLocation } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
+import './AuthPages.css'
+
+function Login() {
+  const { configured, user, loading, signIn, signUp } = useAuth()
+  const location = useLocation()
+  const redirectTo = location.state?.from || '/historico'
+  const [modo, setModo] = useState('entrar')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [erro, setErro] = useState('')
+  const [info, setInfo] = useState('')
+  const [sending, setSending] = useState(false)
+
+  if (!loading && user) {
+    return <Navigate to={redirectTo} replace />
+  }
+
+  async function handleSubmit(event) {
+    event.preventDefault()
+    setErro('')
+    setInfo('')
+    setSending(true)
+
+    try {
+      if (modo === 'entrar') {
+        const { error } = await signIn(email.trim(), password)
+        if (error) throw error
+      } else {
+        const { data, error } = await signUp(email.trim(), password)
+        if (error) throw error
+        if (!data.session) {
+          setInfo('Conta criada. Se o e-mail de confirmação estiver ativo, verifique sua caixa de entrada.')
+        }
+      }
+    } catch (error) {
+      setErro(error.message || 'Não foi possível autenticar.')
+    } finally {
+      setSending(false)
+    }
+  }
+
+  return (
+    <div className="auth-page">
+      <form className="auth-card" onSubmit={handleSubmit}>
+        <p className="auth-kicker">{modo === 'entrar' ? 'Acesso' : 'Cadastro'}</p>
+        <h1>{modo === 'entrar' ? 'Entrar na conta' : 'Criar conta'}</h1>
+        <p className="auth-copy">
+          Com login, cotações e coletas ficam salvas no seu histórico.
+        </p>
+
+        {!configured && (
+          <p className="auth-alert" role="alert">
+            Configure VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY no .env.
+          </p>
+        )}
+
+        <label>
+          <span>E-mail</span>
+          <input
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </label>
+        <label>
+          <span>Senha</span>
+          <input
+            type="password"
+            autoComplete={modo === 'entrar' ? 'current-password' : 'new-password'}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            minLength={6}
+            required
+          />
+        </label>
+
+        {erro && (
+          <p className="auth-alert" role="alert">
+            {erro}
+          </p>
+        )}
+        {info && <p className="auth-info">{info}</p>}
+
+        <button type="submit" className="auth-submit" disabled={sending || !configured}>
+          {sending ? 'Aguarde…' : modo === 'entrar' ? 'Entrar' : 'Criar conta'}
+        </button>
+
+        <button
+          type="button"
+          className="auth-switch"
+          onClick={() => {
+            setModo((prev) => (prev === 'entrar' ? 'cadastrar' : 'entrar'))
+            setErro('')
+            setInfo('')
+          }}
+        >
+          {modo === 'entrar' ? 'Não tem conta? Cadastre-se' : 'Já tem conta? Entrar'}
+        </button>
+
+        <Link to="/cotacao" className="auth-back">
+          Continuar sem login
+        </Link>
+      </form>
+    </div>
+  )
+}
+
+export default Login

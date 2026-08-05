@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { authFetch } from '../lib/authFetch'
 
 function onlyDigits(value) {
   return String(value ?? '').replace(/\D/g, '')
@@ -27,7 +28,7 @@ function defaultTipoPagamento(quoteForm) {
   return 'O'
 }
 
-function CotacaoColetaForm({ quoteForm, totais, locked, numeroColeta, onSuccess }) {
+function CotacaoColetaForm({ quoteForm, totais, cotacao, token, locked, numeroColeta, onSuccess }) {
   const bounds = useMemo(() => {
     const min = new Date()
     const max = new Date()
@@ -65,8 +66,8 @@ function CotacaoColetaForm({ quoteForm, totais, locked, numeroColeta, onSuccess 
       setErro('Informe a data e hora limite da coleta.')
       return
     }
-    if (!totais.peso || totais.peso <= 0) {
-      setErro('A coleta no SSW exige peso maior que zero.')
+    if (!cotacao || !token) {
+      setErro('Gere a cotação novamente antes de solicitar a coleta.')
       return
     }
 
@@ -75,33 +76,44 @@ function CotacaoColetaForm({ quoteForm, totais, locked, numeroColeta, onSuccess 
     )
     if (!confirmed) return
 
+    const pagamento = coleta.tipoPagamento === 'D' ? 'destino' : 'origem'
+    const endereco = [
+      coleta.logradouroEndColeta.trim(),
+      coleta.numeroEndColeta.trim(),
+      coleta.complementoEndColeta.trim(),
+      coleta.bairroEndColeta.trim(),
+    ]
+      .filter(Boolean)
+      .join(', ')
+    const observacao = [
+      coleta.observacao.trim(),
+      `Pagamento: ${pagamento}`,
+      endereco ? `Endereco coleta: ${endereco}` : '',
+      coleta.numeroNF.trim() ? `NF: ${coleta.numeroNF.trim()}` : '',
+    ]
+      .filter(Boolean)
+      .join(' | ')
+      .slice(0, 195)
+
     setErro('')
     setLoading(true)
 
     try {
-      const res = await fetch('/api/coleta', {
+      const res = await authFetch('/api/coleta', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          cotacao,
+          token,
           solicitante,
-          tipoPagamento: coleta.tipoPagamento,
           limiteColeta: coleta.limiteColeta,
+          observacao,
+          nroPedido: coleta.numeroNF.trim(),
           numeroNF: coleta.numeroNF.trim(),
-          observacao: coleta.observacao.trim(),
-          logradouroEndColeta: coleta.logradouroEndColeta.trim(),
-          numeroEndColeta: coleta.numeroEndColeta.trim(),
-          complementoEndColeta: coleta.complementoEndColeta.trim(),
-          bairroEndColeta: coleta.bairroEndColeta.trim(),
-          cnpjPagador: quoteForm.cnpjPagador,
-          cnpjRemetente: quoteForm.cnpjRemetente,
-          cnpjDestinatario: quoteForm.cnpjDestinatario,
-          cnpjSolicitante: quoteForm.cnpjPagador,
-          cepEndColeta: quoteForm.cepOrigem,
+          tipoPagamento: coleta.tipoPagamento,
           cepEntrega: quoteForm.cepDestino,
+          cepEndColeta: quoteForm.cepOrigem,
           quantidade: totais.quantidade,
           peso: totais.peso,
-          cubagem: totais.volume,
-          valorMerc: quoteForm.valorNF ? Number(quoteForm.valorNF) : undefined,
         }),
       })
 
@@ -217,10 +229,10 @@ function CotacaoColetaForm({ quoteForm, totais, locked, numeroColeta, onSuccess 
           <label className="field field-span-2">
             <span>Observação</span>
             <input
-              maxLength={80}
+              maxLength={195}
               value={coleta.observacao}
               onChange={(e) => updateField('observacao', e.target.value)}
-              placeholder="Até 80 caracteres"
+              placeholder="Até 195 caracteres"
               disabled={bloqueado}
             />
           </label>

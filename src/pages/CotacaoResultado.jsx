@@ -62,15 +62,15 @@ function CotacaoResultado({
             <strong>{resultado.prazo} dia(s)</strong>
           </div>
           <div>
-            <small>Peso cálculo</small>
-            <strong>{resultado.pesoCalculo} kg</strong>
+            <small>Nº cotação</small>
+            <strong>{resultado.numeroCotacao || '—'}</strong>
           </div>
-          {resultado.tabCalculo && (
+          {resultado.enviado?.peso ? (
             <div>
-              <small>Tabela</small>
-              <strong>{resultado.tabCalculo}</strong>
+              <small>Peso</small>
+              <strong>{resultado.enviado.peso} kg</strong>
             </div>
-          )}
+          ) : null}
         </div>
       </div>
 
@@ -95,13 +95,10 @@ function CotacaoResultado({
               <span>{formatMoney(resultado.enviado.valorNF)}</span>
             </li>
           </ul>
-          {String(resultado.tabCalculo || '')
-            .toLowerCase()
-            .includes('generic') && (
+          {resultado.numeroCotacao && (
             <p className="resultado-nota">
-              A tabela <strong>Generica</strong> costuma aplicar valor mínimo. Por isso o
-              frete pode não subir ao acrescentar peso/volumes até ultrapassar o mínimo da
-              tabela. Confira no SSW se esse CNPJ tem tabela negociada própria.
+              Cotação <strong>{resultado.numeroCotacao}</strong> gravada no SSW. Use este
+              número para a coleta.
             </p>
           )}
         </div>
