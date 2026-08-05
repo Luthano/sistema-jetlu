@@ -55,7 +55,8 @@ function Login() {
 
         {!configured && (
           <p className="auth-alert" role="alert">
-            Configure VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY no .env.
+            Faltam as chaves do Supabase neste ambiente. Na Vercel, cadastre VITE_SUPABASE_URL e
+            VITE_SUPABASE_PUBLISHABLE_KEY e faça um novo deploy.
           </p>
         )}
 
