@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, Navigate, useLocation } from 'react-router-dom'
+import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import './AuthPages.css'
 
@@ -49,9 +49,6 @@ function Login() {
       <form className="auth-card" onSubmit={handleSubmit}>
         <p className="auth-kicker">{modo === 'entrar' ? 'Acesso' : 'Cadastro'}</p>
         <h1>{modo === 'entrar' ? 'Entrar na conta' : 'Criar conta'}</h1>
-        <p className="auth-copy">
-          Após criar a conta, entre normalmente no painel e preencha seus dados. As cotações são liberadas depois da aprovação do master.
-        </p>
 
         {!configured && (
           <p className="auth-alert" role="alert">
@@ -104,10 +101,6 @@ function Login() {
         >
           {modo === 'entrar' ? 'Não tem conta? Cadastre-se' : 'Já tem conta? Entrar'}
         </button>
-
-        <Link to="/cotacao" className="auth-back">
-          Continuar sem login
-        </Link>
       </form>
     </div>
   )
