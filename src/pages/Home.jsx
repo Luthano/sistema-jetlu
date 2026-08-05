@@ -61,11 +61,10 @@ function Home() {
         <div className="landing-hero-overlay" />
         <div className="landing-hero-content">
           <img className="landing-hero-logo" src="/home/logo-jetlu.svg" alt="Jetlu" />
-          <img className="landing-hero-rocket" src="/home/foguete-branco.svg" alt="" />
           <h1>Logística acelerada, que faz acontecer.</h1>
           <div className="landing-hero-actions">
-            <Link to="/cotacao" className="landing-cta-img">
-              <img src="/home/cta-cotacao.svg" alt="Faça uma cotação" />
+            <Link to="/cotacao" className="landing-cta">
+              Fazer cotação
             </Link>
             <Link to="/rastrear" className="landing-cta landing-cta-outline">
               Rastrear encomenda
@@ -210,8 +209,8 @@ function Home() {
         <img className="landing-banner-cta-bg" src="/home/banner-blog.png" alt="" />
         <div className="landing-wrap landing-banner-cta-inner">
           <h2>Pronto para acelerar sua logística?</h2>
-          <Link to="/cotacao" className="landing-cta-img">
-            <img src="/home/cta-cotacao.svg" alt="Faça uma cotação" />
+          <Link to="/cotacao" className="landing-cta">
+            Fazer cotação
           </Link>
         </div>
       </Reveal>

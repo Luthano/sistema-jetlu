@@ -30,15 +30,28 @@
   margin: 4px 0;
 }
 
-.painel-sair {
-  border: 1px solid #d7dde6;
-  background: #fff;
-  color: #062855;
+.painel-sair,
+.painel-edit,
+.painel-cancel,
+.painel-danger-btn,
+.painel-cadastro .auth-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 999px;
   padding: 10px 16px;
   font: inherit;
-  font-weight: 700;
+  font-weight: 800;
   cursor: pointer;
+  width: fit-content;
+}
+
+.painel-sair,
+.painel-edit,
+.painel-cancel {
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--brand-deep);
 }
 
 .painel-cards {
@@ -170,24 +183,6 @@
 .painel-cadastro h2,
 .painel-danger h3 {
   margin: 0;
-  color: var(--brand-deep);
-}
-
-.painel-edit,
-.painel-cancel,
-.painel-danger-btn {
-  border-radius: 999px;
-  padding: 10px 16px;
-  font: inherit;
-  font-weight: 800;
-  cursor: pointer;
-  width: fit-content;
-}
-
-.painel-edit,
-.painel-cancel {
-  border: 1px solid var(--line);
-  background: #fff;
   color: var(--brand-deep);
 }
 
