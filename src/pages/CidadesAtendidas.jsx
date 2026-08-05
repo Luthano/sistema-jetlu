@@ -124,7 +124,8 @@ function CidadesAtendidas() {
   }
 
   return (
-    <div className="cidades-page">
+    <div className="page-shell">
+      <div className="page-block cidades-page">
       <section className="cidades-map">
         <div className="cidades-wrap cidades-map-grid">
           <Reveal className="cidades-map-copy">
@@ -239,6 +240,7 @@ function CidadesAtendidas() {
           )}
         </section>
       )}
+      </div>
     </div>
   )
 }

@@ -18,13 +18,13 @@
   --jetlu-ink: #1a1c27;
   --jetlu-muted: #5c6470;
   color: var(--jetlu-ink);
-  background: #fff;
-  padding: 28px 0 80px;
+  background: transparent;
+  padding: 0;
 }
 
 .cidades-wrap {
-  width: min(1180px, calc(100% - 32px));
-  margin: 0 auto;
+  width: 100%;
+  margin: 0;
 }
 
 .cidades-map-grid {

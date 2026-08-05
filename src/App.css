@@ -89,6 +89,25 @@
   width: 100%;
 }
 
+.page-shell {
+  min-height: calc(100dvh - 72px);
+  padding: 40px 16px 72px;
+  background: #f4f6fa;
+}
+
+.page-block {
+  width: min(1120px, 100%);
+  margin: 0 auto;
+  background: #fff;
+  border-radius: 20px;
+  padding: 28px;
+  box-shadow: 0 16px 40px rgba(6, 40, 85, 0.08);
+}
+
+.page-block.is-narrow {
+  width: min(880px, 100%);
+}
+
 @media (max-width: 640px) {
   .app-header {
     grid-template-columns: 1fr;

@@ -1,8 +1,8 @@
 .cotacao-page {
-  width: min(1120px, calc(100% - 32px));
-  margin: 0 auto;
-  padding: 28px 0 80px;
-  background: #fff;
+  width: auto;
+  margin: 0;
+  padding: 0;
+  background: transparent;
 }
 
 .cotacao-bloqueio {
@@ -608,10 +608,6 @@
 }
 
 @media (max-width: 640px) {
-  .cotacao-page {
-    width: min(100% - 24px, 1120px);
-  }
-
   .fields-grid,
   .volumes-summary {
     grid-template-columns: 1fr;

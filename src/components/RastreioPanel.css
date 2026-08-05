@@ -1,8 +1,8 @@
 .rastreio-panel {
-  background: #fff;
-  border-radius: 20px;
-  padding: 22px;
-  box-shadow: 0 18px 48px rgba(4, 26, 54, 0.16);
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
 }
 
 .rastreio-modes {

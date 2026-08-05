@@ -1,7 +1,7 @@
 .rastrear-page {
-  width: min(880px, calc(100% - 32px));
-  margin: 0 auto;
-  padding: 36px 0 80px;
+  width: auto;
+  margin: 0;
+  padding: 0;
 }
 
 .rastrear-hero {

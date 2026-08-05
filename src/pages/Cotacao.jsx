@@ -202,7 +202,8 @@ function Cotacao() {
 
   if (!authLoading && user && !canUseCotacao) {
     return (
-      <div className="cotacao-page">
+      <div className="page-shell">
+        <div className="page-block cotacao-page">
         <p className="cotacao-kicker">Cotação online</p>
         <section className="form-section cotacao-bloqueio">
           <h2>Acesso às cotações</h2>
@@ -219,12 +220,14 @@ function Cotacao() {
             Ir para o painel
           </Link>
         </section>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="cotacao-page">
+    <div className="page-shell">
+      <div className="page-block cotacao-page">
       <p className="cotacao-kicker">Cotação online</p>
 
       <form className="cotacao-layout" onSubmit={handleSubmit}>
@@ -424,7 +427,8 @@ function Cotacao() {
           </div>
         </aside>
       </form>
-    </div>
+        </div>
+      </div>
   )
 }
 
