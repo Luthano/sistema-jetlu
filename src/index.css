@@ -1,0 +1,52 @@
+:root {
+  --ink: #1a1c27;
+  --ink-soft: #4a5563;
+  --muted: #5c6470;
+  --line: #dce3ea;
+  --surface: #ffffff;
+  --surface-2: #f6f8fb;
+  --surface-3: #eef2f7;
+  --brand: #f80016;
+  --brand-deep: #062855;
+  --accent: #f80016;
+  --accent-soft: #ffe8ea;
+  --ok: #1f7a4d;
+  --ok-soft: #e6f6ee;
+  --warn: #9a6b00;
+  --warn-soft: #fff6e0;
+  --danger: #a32020;
+  --danger-soft: #fde8e8;
+  --shadow: 0 12px 30px rgba(6, 40, 85, 0.08);
+  --radius: 14px;
+  --font-display: 'Sora', sans-serif;
+  --font-body: 'Plus Jakarta Sans', sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scrollbar-gutter: stable;
+  overflow-y: scroll;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--ink);
+  background: #fff;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}

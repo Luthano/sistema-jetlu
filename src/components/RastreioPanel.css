@@ -1,0 +1,204 @@
+.rastreio-panel {
+  background: #fff;
+  border-radius: 20px;
+  padding: 22px;
+  box-shadow: 0 18px 48px rgba(4, 26, 54, 0.16);
+}
+
+.rastreio-modes {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+  padding: 4px;
+  border-radius: 999px;
+  background: #f3f5f8;
+}
+
+.rastreio-modes button {
+  flex: 1;
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 12px;
+  background: transparent;
+  color: #5c6470;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.rastreio-modes button.is-active {
+  background: #062855;
+  color: #fff;
+}
+
+.rastreio-form {
+  display: grid;
+  gap: 14px;
+}
+
+.rastreio-form label {
+  display: grid;
+  gap: 6px;
+}
+
+.rastreio-form span {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #062855;
+}
+
+.rastreio-form input {
+  width: 100%;
+  border: 1px solid #d7dde6;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font: inherit;
+  color: #1a1c27;
+  background: #fff;
+}
+
+.rastreio-form input:focus {
+  outline: 2px solid #f80016;
+  outline-offset: 1px;
+  border-color: transparent;
+}
+
+.rastreio-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 12px;
+}
+
+.rastreio-form .landing-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: start;
+  min-width: 220px;
+  padding: 14px 22px;
+  border: none;
+  border-radius: 999px;
+  background: #f80016;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(248, 0, 22, 0.35);
+}
+
+.rastreio-form .landing-cta:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+.rastreio-form .landing-cta:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.rastreio-alert {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #fff1f2;
+  color: #a6020c;
+  font-weight: 600;
+}
+
+.rastreio-result {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid #e6ebf1;
+}
+
+.rastreio-result header {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  margin-bottom: 10px;
+}
+
+.rastreio-result header p {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  color: #062855;
+}
+
+.rastreio-result header span,
+.rastreio-parties p,
+.rastreio-timeline aside {
+  color: #5c6470;
+  font-size: 0.9rem;
+}
+
+.rastreio-parties {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+
+.rastreio-parties strong {
+  display: block;
+  color: #062855;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.rastreio-timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.rastreio-timeline li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: #f7f9fc;
+  border-left: 4px solid #f80016;
+}
+
+.rastreio-timeline strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #062855;
+}
+
+.rastreio-timeline p {
+  margin: 0;
+  color: #3d4550;
+  line-height: 1.45;
+}
+
+.rastreio-timeline aside {
+  display: grid;
+  gap: 4px;
+  text-align: right;
+  min-width: 140px;
+}
+
+.rastreio-timeline time {
+  font-weight: 700;
+  color: #062855;
+}
+
+@media (max-width: 720px) {
+  .rastreio-grid,
+  .rastreio-timeline li {
+    grid-template-columns: 1fr;
+  }
+
+  .rastreio-timeline aside {
+    text-align: left;
+    min-width: 0;
+  }
+
+  .rastreio-form .landing-cta {
+    width: 100%;
+    justify-self: stretch;
+  }
+}

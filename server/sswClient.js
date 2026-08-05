@@ -1,0 +1,232 @@
+import { XMLParser } from 'fast-xml-parser'
+
+const NS = 'urn:sswinfbr.sswCotacao'
+const parser = new XMLParser({
+  ignoreAttributes: false,
+  trimValues: true,
+  parseTagValue: true,
+  isArray: (name) => name === 'mercadoria',
+})
+
+function escapeXml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;')
+}
+
+function buildSoapEnvelope(method, fields) {
+  const body = Object.entries(fields)
+    .map(([key, value]) => {
+      if (value === undefined || value === null || value === '') {
+        return `<${key} xsi:nil="true"/>`
+      }
+      return `<${key}>${escapeXml(value)}</${key}>`
+    })
+    .join('')
+
+  return `<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <soap:Body>
+    <${method} xmlns="${NS}">
+      ${body}
+    </${method}>
+  </soap:Body>
+</soap:Envelope>`
+}
+
+function getCredentials() {
+  const { SSW_DOMINIO, SSW_LOGIN, SSW_SENHA } = process.env
+  if (!SSW_DOMINIO || !SSW_LOGIN || !SSW_SENHA) {
+    throw new Error('Credenciais SSW não configuradas. Preencha SSW_DOMINIO, SSW_LOGIN e SSW_SENHA no .env')
+  }
+  return {
+    dominio: SSW_DOMINIO,
+    login: SSW_LOGIN,
+    senha: SSW_SENHA,
+  }
+}
+
+function getEndpoint() {
+  return process.env.SSW_COTACAO_URL || 'https://ssw.inf.br/ws/sswCotacao/index.php'
+}
+
+function extractReturnXml(soapResponse) {
+  const decoded = soapResponse
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+
+  const returnMatch = decoded.match(/<return[^>]*>([\s\S]*?)<\/return>/i)
+  if (returnMatch) {
+    let inner = returnMatch[1].trim()
+    if (inner.includes('&lt;')) {
+      inner = inner
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&amp;/g, '&')
+        .replace(/&quot;/g, '"')
+        .replace(/&apos;/g, "'")
+    }
+    return inner
+  }
+
+  const cotacaoMatch = decoded.match(/<cotacao[\s\S]*<\/cotacao>/i)
+  if (cotacaoMatch) return cotacaoMatch[0]
+
+  const mercadoriasMatch = decoded.match(/<mercadorias[\s\S]*<\/mercadorias>/i)
+  if (mercadoriasMatch) return mercadoriasMatch[0]
+
+  return decoded
+}
+
+async function callSsw(method, soapAction, fields) {
+  const envelope = buildSoapEnvelope(method, fields)
+  const response = await fetch(getEndpoint(), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'text/xml; charset=utf-8',
+      SOAPAction: soapAction,
+      Accept: 'text/xml',
+    },
+    body: envelope,
+  })
+
+  const text = await response.text()
+  if (!response.ok) {
+    throw new Error(`SSW respondeu HTTP ${response.status}: ${text.slice(0, 200)}`)
+  }
+
+  return extractReturnXml(text)
+}
+
+function onlyDigits(value) {
+  return String(value ?? '').replace(/\D/g, '')
+}
+
+export async function cotar(payload) {
+  const credentials = getCredentials()
+  const peso = Number(payload.peso) || 0
+  const volume = Number(payload.volume) || 0
+
+  if (!peso && !volume) {
+    throw new Error('Informe peso ou volume (cubagem). Ambos não podem estar zerados.')
+  }
+
+  const fields = {
+    ...credentials,
+    cnpjPagador: onlyDigits(payload.cnpjPagador),
+    cepOrigem: onlyDigits(payload.cepOrigem),
+    cepDestino: onlyDigits(payload.cepDestino),
+    valorNF: Number(payload.valorNF),
+    quantidade: Number(payload.quantidade),
+    peso,
+    volume,
+    mercadoria: Number(payload.mercadoria) || 1,
+    cnpjDestinatario: onlyDigits(payload.cnpjDestinatario) || undefined,
+    coletar: payload.coletar || undefined,
+    entDificil: payload.entDificil || undefined,
+    destContribuinte: payload.destContribuinte || undefined,
+    qtdePares: payload.qtdePares ? Number(payload.qtdePares) : undefined,
+    altura: payload.altura ? Number(payload.altura) : undefined,
+    largura: payload.largura ? Number(payload.largura) : undefined,
+    comprimento: payload.comprimento ? Number(payload.comprimento) : undefined,
+    fatorMultiplicador: payload.fatorMultiplicador
+      ? Number(payload.fatorMultiplicador)
+      : undefined,
+    cnpjRemetente: onlyDigits(payload.cnpjRemetente) || undefined,
+  }
+
+  const xml = await callSsw('cotar', `${NS}#cotacao`, fields)
+  const parsed = parser.parse(xml)
+  const cotacao = parsed.cotacao || parsed
+
+  const erro = Number(cotacao.erro)
+  return {
+    erro,
+    mensagem: cotacao.mensagem || '',
+    sucesso: erro === 0 || erro === 1,
+    alerta: erro === 1,
+    enviado: {
+      quantidade: fields.quantidade,
+      peso: fields.peso,
+      volume: fields.volume,
+      valorNF: fields.valorNF,
+    },
+    pesoCalculo: cotacao.pesoCalculo,
+    prazo: cotacao.prazo,
+    totalFrete: cotacao.totalFrete,
+    tabCalculo: cotacao.tabCalculo,
+    detalhamento: {
+      fretePeso: cotacao.fretePeso,
+      freteValor: cotacao.freteValor,
+      despacho: cotacao.despacho,
+      cat: cotacao.cat,
+      itr: cotacao.itr,
+      gris: cotacao.gris,
+      pedagio: cotacao.pedagio,
+      tas: cotacao.tas,
+      adiclocal: cotacao.adiclocal,
+      suframa: cotacao.suframa,
+      devcannf: cotacao.devcannf,
+      reembolso: cotacao.reembolso,
+      outros: cotacao.outros,
+      coleta: cotacao.coleta,
+      entrega: cotacao.entrega,
+      adicFrete: cotacao.adicFrete,
+      trt: cotacao.trt,
+      impostos: cotacao.impostos,
+      tar: cotacao.tar,
+      pos: cotacao.pos,
+      tdc: cotacao.tdc,
+      entGeral: cotacao.entGeral,
+      agenda: cotacao.agenda,
+      paletiz: cotacao.paletiz,
+      separa: cotacao.separa,
+      capataz: cotacao.capataz,
+      veicDedic: cotacao.veicDedic,
+      CO2: cotacao.CO2,
+      RDC: cotacao.RDC,
+      seguroFluvial: cotacao.seguroFluvial,
+      redespFluvial: cotacao.redespFluvial,
+    },
+  }
+}
+
+export async function getMercadorias(cnpjPagador) {
+  const credentials = getCredentials()
+  const fields = {
+    ...credentials,
+    cnpjPagador: onlyDigits(cnpjPagador),
+  }
+
+  const xml = await callSsw('getMercadoria', `${NS}#getMercadoria`, fields)
+  const parsed = parser.parse(xml)
+
+  if (parsed.cotacao?.erro !== undefined || parsed.erro !== undefined) {
+    const erro = Number(parsed.cotacao?.erro ?? parsed.erro)
+    const mensagem = parsed.cotacao?.mensagem || parsed.mensagem || 'Erro ao buscar mercadorias'
+    return { erro, mensagem, mercadorias: [] }
+  }
+
+  const root = parsed.mercadorias || parsed
+  let items = root.mercadoria || []
+  if (!Array.isArray(items)) items = [items]
+
+  const mercadorias = items
+    .filter((item) => item && (item.codigo !== undefined || item.descricao))
+    .map((item) => ({
+      codigo: Number(item.codigo),
+      descricao: String(item.descricao || ''),
+    }))
+
+  if (mercadorias.length === 0) {
+    mercadorias.push({ codigo: 1, descricao: 'DIVERSOS' })
+  }
+
+  return { erro: 0, mensagem: '', mercadorias }
+}

@@ -1,0 +1,46 @@
+.mapa-brasil {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+}
+
+.mapa-brasil svg {
+  width: 100%;
+  height: auto;
+  max-width: 450px;
+}
+
+.mapa-brasil #svg-map path,
+.mapa-brasil #svg-map .circle {
+  transition: fill 0.2s ease, filter 0.2s ease;
+}
+
+.mapa-brasil #svg-map path {
+  fill: #f80016;
+}
+
+.mapa-brasil #svg-map text {
+  fill: #fff;
+  font: 700 12px 'Plus Jakarta Sans', sans-serif;
+  pointer-events: none;
+}
+
+.mapa-brasil #svg-map a {
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.mapa-brasil #svg-map a:hover path {
+  fill: #062855 !important;
+  filter: drop-shadow(0 0 6px rgba(6, 40, 85, 0.25));
+}
+
+.mapa-brasil #svg-map .circle {
+  fill: #f80050;
+}
+
+.mapa-brasil #svg-map a:hover .circle {
+  fill: #003399 !important;
+}
