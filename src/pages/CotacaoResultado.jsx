@@ -38,6 +38,28 @@ function formatMoney(value) {
   return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 }
 
+const NOMES_POR_ID = {
+  jetlu: 'Jetlu',
+  lopesul: 'Lopesul',
+  envia: 'Envia Rápido',
+}
+
+function nomeTransportadora(oferta) {
+  const id = String(oferta?.transportadoraId || '').toLowerCase()
+  if (NOMES_POR_ID[id]) return NOMES_POR_ID[id]
+
+  const dominio = String(oferta?.dominio || '').trim().toUpperCase()
+  if (dominio === 'JEU') return 'Jetlu'
+  if (dominio === 'LSU') return 'Lopesul'
+
+  const bruto = String(oferta?.nome || oferta?.nomeTransportadora || '').trim()
+  if (bruto && !/^ssw\b/i.test(bruto) && bruto !== '—' && bruto !== '-') {
+    return bruto
+  }
+
+  return 'Transportadora'
+}
+
 function OfertaCard({
   oferta,
   selecionada,
@@ -50,14 +72,14 @@ function OfertaCard({
   const detalhes = oferta?.detalhamento
     ? Object.entries(oferta.detalhamento).filter(([, value]) => Number(value) > 0)
     : []
+  const titulo = nomeTransportadora(oferta)
 
   if (!oferta.sucesso) {
     return (
       <article className="oferta-card oferta-card--erro">
         <header className="oferta-card-head">
           <div>
-            <p className="oferta-nome">{oferta.nome}</p>
-            <p className="oferta-dominio">SSW {oferta.dominio || '—'}</p>
+            <p className="oferta-nome">{titulo}</p>
           </div>
           <span className="oferta-badge oferta-badge--erro">Indisponível</span>
         </header>
@@ -70,8 +92,7 @@ function OfertaCard({
     <article className={`oferta-card ${selecionada ? 'oferta-card--selecionada' : ''}`}>
       <header className="oferta-card-head">
         <div>
-          <p className="oferta-nome">{oferta.nome}</p>
-          <p className="oferta-dominio">SSW {oferta.dominio || '—'}</p>
+          <p className="oferta-nome">{titulo}</p>
         </div>
         {!oferta.simulacao && oferta.numeroCotacao ? (
           <button

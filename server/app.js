@@ -198,11 +198,12 @@ app.post('/api/cotacao', async (req, res) => {
 
           const result = await cotarFn(payload, carrier.credentials)
           const oferta = {
+            ...result,
+            // Depois do result para não sobrescrever com campos do SSW
             transportadoraId: carrier.id,
             nome: carrier.nome,
             dominio: carrier.dominio,
             cnpjPagador,
-            ...result,
             simulacao: !persistir,
             numeroCotacao: persistir ? result.numeroCotacao : '',
             token: persistir ? result.token : undefined,
