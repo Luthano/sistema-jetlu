@@ -68,7 +68,6 @@ function ToggleGroup({ label, value, onChange, yesLabel = 'Sim', noLabel = 'Não
 function Cotacao() {
   const { user, loading: authLoading, canUseCotacao, profileComplete, isRejected } = useAuth()
   const [form, setForm] = useState(INITIAL_FORM)
-  const [cnpjPorCarrier, setCnpjPorCarrier] = useState({})
   const [transportadoras, setTransportadoras] = useState([])
   const [volumes, setVolumes] = useState([criarVolumeVazio()])
   const [mercadorias, setMercadorias] = useState([{ codigo: 1, descricao: 'DIVERSOS' }])
@@ -83,16 +82,12 @@ function Cotacao() {
   const totais = useMemo(() => agregarVolumes(volumes), [volumes])
 
   const ofertaSelecionada = useMemo(() => {
-    const ofertas = resultado?.ofertas || []
+    const ofertas = (resultado?.ofertas || []).filter((o) => o.sucesso)
     return ofertas.find((o) => o.transportadoraId === ofertaSelecionadaId) || null
   }, [resultado, ofertaSelecionadaId])
 
   function updateField(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }))
-  }
-
-  function updateCnpjCarrier(id, value) {
-    setCnpjPorCarrier((prev) => ({ ...prev, [id]: value }))
   }
 
   useEffect(() => {
@@ -165,14 +160,6 @@ function Cotacao() {
       return
     }
 
-    for (const carrier of transportadoras) {
-      const override = onlyDigits(cnpjPorCarrier[carrier.id] || '')
-      if (override && !isValidCpfCnpj(override)) {
-        setErro(`CNPJ/CPF pagador inválido para ${carrier.nome}.`)
-        return
-      }
-    }
-
     const dest = onlyDigits(form.cnpjDestinatario)
     if (dest && !isValidCpfCnpj(dest)) {
       setErro('CPF/CNPJ do destinatário inválido.')
@@ -197,18 +184,11 @@ function Cotacao() {
 
     setLoading(true)
 
-    const cnpjPagadores = {}
-    for (const carrier of transportadoras) {
-      const override = onlyDigits(cnpjPorCarrier[carrier.id] || '')
-      if (override) cnpjPagadores[carrier.id] = override
-    }
-
     try {
       const res = await authFetch('/api/cotacao', {
         method: 'POST',
         body: JSON.stringify({
           ...form,
-          cnpjPagadores,
           valorNF: Number(form.valorNF),
           qtdePares: form.qtdePares ? Number(form.qtdePares) : undefined,
           mercadoria: Number(form.mercadoria) || 1,
@@ -221,10 +201,8 @@ function Cotacao() {
       const data = await res.json()
 
       if (!data.sucesso) {
-        setErro(data.mensagem || 'Não foi possível calcular a cotação.')
-        if (Array.isArray(data.ofertas) && data.ofertas.length > 0) {
-          setResultado(data)
-        }
+        setErro(data.mensagem || 'Nenhuma transportadora atende esta rota com os dados informados.')
+        setResultado(null)
         return
       }
 
@@ -299,7 +277,7 @@ function Cotacao() {
 
             <div className="fields-grid">
               <label className="field field-span-2">
-                <span>CPF ou CNPJ do pagador (padrão) *</span>
+                <span>CPF ou CNPJ do pagador *</span>
                 <input
                   required
                   value={form.cnpjPagador}
@@ -307,29 +285,7 @@ function Cotacao() {
                   placeholder="Digite somente números"
                   inputMode="numeric"
                 />
-                <small className="field-hint">
-                  Usado em todas as tabelas, salvo se informar um CNPJ específico por transportadora abaixo.
-                </small>
               </label>
-
-              {transportadoras.length > 0 && (
-                <div className="field field-span-2 cnpj-por-carrier">
-                  <span className="cnpj-por-carrier-title">CNPJ pagador por transportadora (opcional)</span>
-                  <div className="fields-grid">
-                    {transportadoras.map((carrier) => (
-                      <label className="field" key={carrier.id}>
-                        <span>{carrier.nome} ({carrier.dominio})</span>
-                        <input
-                          value={cnpjPorCarrier[carrier.id] || ''}
-                          onChange={(e) => updateCnpjCarrier(carrier.id, e.target.value)}
-                          placeholder="Vazio = usa o padrão"
-                          inputMode="numeric"
-                        />
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              )}
 
               <label className="field">
                 <span>Remetente (opcional)</span>
@@ -507,13 +463,13 @@ function Cotacao() {
               </li>
               {transportadoras.length > 0 && (
                 <li>
-                  <span>Tabelas</span>
-                  <strong>{transportadoras.map((t) => t.nome).join(', ')}</strong>
+                  <span>Consulta automática</span>
+                  <strong>{transportadoras.map((t) => t.nome).join(' + ')}</strong>
                 </li>
               )}
             </ul>
             <button type="submit" className="btn-primary" disabled={loading}>
-              {loading ? 'Consultando transportadoras…' : 'Comparar cotações'}
+              {loading ? 'Consultando rotas…' : 'Calcular frete'}
             </button>
           </div>
         </aside>

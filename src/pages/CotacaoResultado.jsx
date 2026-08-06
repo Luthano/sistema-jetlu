@@ -171,61 +171,45 @@ function CotacaoResultado({
   onSolicitarColeta,
   children,
 }) {
-  const ofertasRaw = Array.isArray(resultado?.ofertas) ? resultado.ofertas : []
   const catalogo =
     (Array.isArray(resultado?.transportadoras) && resultado.transportadoras.length > 0
       ? resultado.transportadoras
       : null) ||
-    (Array.isArray(transportadoras) && transportadoras.length > 0 ? transportadoras : null)
+    (Array.isArray(transportadoras) && transportadoras.length > 0 ? transportadoras : [])
 
-  let ofertas = ofertasRaw
-  if (catalogo && catalogo.length > 0) {
-    const byId = new Map(
-      ofertasRaw
-        .filter((o) => o?.transportadoraId)
-        .map((o) => [String(o.transportadoraId).toLowerCase(), o]),
-    )
-    ofertas = catalogo.map((carrier) => {
-      const id = String(carrier.id).toLowerCase()
-      const found = byId.get(id)
-      if (found) {
-        return {
-          ...found,
-          transportadoraId: carrier.id,
-          nome: carrier.nome || found.nome,
-          dominio: carrier.dominio || found.dominio,
-        }
-      }
-      return {
-        transportadoraId: carrier.id,
-        nome: carrier.nome,
-        dominio: carrier.dominio,
-        sucesso: false,
-        erro: -1,
-        mensagem: 'Esta transportadora não retornou cotação nesta consulta.',
-      }
-    })
-    // Ofertas extras (sem id no catálogo) ficam no fim
-    for (const oferta of ofertasRaw) {
-      const id = String(oferta?.transportadoraId || '').toLowerCase()
-      if (!id || !catalogo.some((c) => String(c.id).toLowerCase() === id)) {
-        ofertas.push(oferta)
-      }
-    }
-  } else if (ofertas.length === 0 && resultado?.sucesso) {
+  const nomePorId = new Map(
+    catalogo.map((c) => [String(c.id).toLowerCase(), { nome: c.nome, dominio: c.dominio }]),
+  )
+
+  const ofertasRaw = Array.isArray(resultado?.ofertas) ? resultado.ofertas : []
+  let ofertas = ofertasRaw.filter((o) => o?.sucesso)
+  if (ofertas.length === 0 && resultado?.sucesso) {
     ofertas = [resultado]
   }
 
+  ofertas = ofertas.map((oferta) => {
+    const meta = nomePorId.get(String(oferta.transportadoraId || '').toLowerCase())
+    if (!meta) return oferta
+    return {
+      ...oferta,
+      nome: meta.nome || oferta.nome,
+      dominio: meta.dominio || oferta.dominio,
+    }
+  })
+
   const enviado = resultado?.enviado || ofertas.find((o) => o.enviado)?.enviado
+  const qtd = ofertas.length
 
   return (
     <section className="resultado-card" id="resultado-cotacao">
       <div className="ofertas-intro">
-        <h2>Ofertas por transportadora</h2>
+        <h2>{qtd > 1 ? 'Opções de frete' : 'Cotação disponível'}</h2>
         <p>
           {resultado.simulacao
-            ? 'Simulação comparativa. Entre com conta aprovada para gravar no SSW e solicitar coleta.'
-            : 'Escolha a transportadora para seguir com a coleta. Cada tabela usa o CNPJ pagador correspondente.'}
+            ? 'Simulação das transportadoras que atendem esta rota. Entre com conta aprovada para gravar no SSW e solicitar coleta.'
+            : qtd > 1
+              ? 'Mais de uma transportadora atende esta rota. Escolha a opção para seguir com a coleta.'
+              : 'Somente esta transportadora retornou cotação para a rota informada.'}
         </p>
       </div>
 

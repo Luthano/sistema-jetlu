@@ -12,6 +12,7 @@ import {
   publicCarrierList,
   resolveCnpjPagador,
 } from './sswCarriers.js'
+import { decodeHtmlEntities, mensagemSemCobertura } from './htmlEntities.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 dotenv.config({ path: path.resolve(__dirname, '../.env') })
@@ -205,7 +206,7 @@ app.post('/api/cotacao', async (req, res) => {
             cnpjPagador,
             sucesso: Boolean(result.sucesso),
             erro: result.erro,
-            mensagem: result.mensagem || '',
+            mensagem: decodeHtmlEntities(result.mensagem || ''),
             alerta: Boolean(result.alerta),
             totalFrete: result.totalFrete,
             prazo: result.prazo,
@@ -257,8 +258,7 @@ app.post('/api/cotacao', async (req, res) => {
         ? ok.length === 1
           ? `Cotação disponível em ${ok[0].nome}.`
           : `${ok.length} ofertas encontradas.`
-        : ofertasOrdenadas.map((o) => `${o.nome}: ${o.mensagem || 'sem cobertura'}`).join(' | ') ||
-          'Nenhuma transportadora retornou cotação.',
+        : mensagemSemCobertura(ofertasOrdenadas),
       ofertas: ofertasOrdenadas,
       ...(melhor
         ? {

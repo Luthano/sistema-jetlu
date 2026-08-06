@@ -1,5 +1,6 @@
 import { XMLParser } from 'fast-xml-parser'
 import { getDefaultCredentials, getCarrier } from './sswCarriers.js'
+import { decodeHtmlEntities } from './htmlEntities.js'
 
 const NS = 'urn:sswinfbr.sswCotacaoColeta'
 const parser = new XMLParser({
@@ -15,17 +16,6 @@ function escapeXml(value) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&apos;')
-}
-
-function decodeHtmlEntities(value) {
-  return String(value ?? '')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&apos;/g, "'")
-    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
-    .replace(/&#x([0-9a-f]+);/gi, (_, code) => String.fromCharCode(parseInt(code, 16)))
 }
 
 function buildSoapEnvelope(method, fields) {

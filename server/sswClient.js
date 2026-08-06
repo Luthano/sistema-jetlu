@@ -1,5 +1,6 @@
 import { XMLParser } from 'fast-xml-parser'
 import { getDefaultCredentials, getCarrier } from './sswCarriers.js'
+import { decodeHtmlEntities } from './htmlEntities.js'
 
 const NS = 'urn:sswinfbr.sswCotacao'
 const parser = new XMLParser({
@@ -150,7 +151,7 @@ export async function cotar(payload, credentialsOrCarrierId) {
   const erro = Number(cotacao.erro)
   return {
     erro,
-    mensagem: cotacao.mensagem || '',
+    mensagem: decodeHtmlEntities(cotacao.mensagem || ''),
     sucesso: erro === 0 || erro === 1,
     alerta: erro === 1,
     enviado: {

@@ -504,21 +504,6 @@
   padding: 16px;
 }
 
-.cnpj-por-carrier {
-  display: grid;
-  gap: 10px;
-  padding: 12px 14px;
-  border: 1px dashed var(--line);
-  border-radius: 10px;
-  background: var(--surface-2);
-}
-
-.cnpj-por-carrier-title {
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: var(--ink-soft);
-}
-
 .resultado-hero {
   display: grid;
   grid-template-columns: 1.2fr 1fr;
