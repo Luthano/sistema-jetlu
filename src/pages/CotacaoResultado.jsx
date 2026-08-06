@@ -182,12 +182,7 @@ function CotacaoResultado({
   )
 
   const ofertasRaw = Array.isArray(resultado?.ofertas) ? resultado.ofertas : []
-  let ofertas = ofertasRaw.filter((o) => o?.sucesso)
-  if (ofertas.length === 0 && resultado?.sucesso) {
-    ofertas = [resultado]
-  }
-
-  ofertas = ofertas.map((oferta) => {
+  const enriquecidas = ofertasRaw.map((oferta) => {
     const meta = nomePorId.get(String(oferta.transportadoraId || '').toLowerCase())
     if (!meta) return oferta
     return {
@@ -197,6 +192,12 @@ function CotacaoResultado({
     }
   })
 
+  let ofertas = enriquecidas.filter((o) => o?.sucesso)
+  if (ofertas.length === 0 && resultado?.sucesso) {
+    ofertas = [resultado]
+  }
+
+  const falhas = enriquecidas.filter((o) => o && !o.sucesso)
   const enviado = resultado?.enviado || ofertas.find((o) => o.enviado)?.enviado
   const qtd = ofertas.length
 
@@ -206,10 +207,10 @@ function CotacaoResultado({
         <h2>{qtd > 1 ? 'Opções de frete' : 'Cotação disponível'}</h2>
         <p>
           {resultado.simulacao
-            ? 'Simulação das transportadoras que atendem esta rota. Entre com conta aprovada para gravar no SSW e solicitar coleta.'
+            ? 'Simulação das transportadoras consultadas para esta rota.'
             : qtd > 1
-              ? 'Mais de uma transportadora atende esta rota. Escolha a opção para seguir com a coleta.'
-              : 'Somente esta transportadora retornou cotação para a rota informada.'}
+              ? 'Mais de uma transportadora retornou frete. Escolha a opção para a coleta.'
+              : 'Apenas esta transportadora retornou frete nesta consulta.'}
         </p>
       </div>
 
@@ -255,6 +256,14 @@ function CotacaoResultado({
             </OfertaCard>
           )
         })}
+
+        {falhas.map((oferta, index) => (
+          <OfertaCard
+            key={`fail-${oferta.transportadoraId || index}`}
+            oferta={oferta}
+            selecionada={false}
+          />
+        ))}
       </div>
     </section>
   )

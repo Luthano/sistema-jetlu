@@ -221,6 +221,17 @@ app.post('/api/cotacao', async (req, res) => {
             await salvarCotacaoHistorico(req, { ...payload, transportadoraId: carrier.id }, oferta)
           }
 
+          console.info(
+            `[cotacao] ${carrier.nome} (${carrier.dominio})`,
+            JSON.stringify({
+              sucesso: oferta.sucesso,
+              erro: oferta.erro,
+              mensagem: oferta.mensagem,
+              totalFrete: oferta.totalFrete,
+              numeroCotacao: oferta.numeroCotacao || null,
+            }),
+          )
+
           return oferta
         } catch (error) {
           console.error(`Erro cotar ${carrier.id}:`, error)
@@ -231,7 +242,7 @@ app.post('/api/cotacao', async (req, res) => {
             cnpjPagador,
             sucesso: false,
             erro: -2,
-            mensagem: error.message || 'Erro ao cotar nesta transportadora',
+            mensagem: decodeHtmlEntities(error.message) || 'Erro ao cotar nesta transportadora',
           }
         }
       }),
