@@ -59,10 +59,15 @@ export function listActiveCarriers() {
 
   const legacy = legacyCredentials()
   if (legacy) {
+    const dominio = String(legacy.dominio || '').toUpperCase()
+    const nome =
+      dominio === 'JEU' ? 'Jetlu' : dominio === 'LSU' ? 'Lopesul' : dominio || 'Transportadora'
+    const id =
+      dominio === 'JEU' ? 'jetlu' : dominio === 'LSU' ? 'lopesul' : 'default'
     return [
       {
-        id: 'default',
-        nome: 'Transportadora',
+        id,
+        nome,
         dominio: legacy.dominio,
         credentials: legacy,
       },

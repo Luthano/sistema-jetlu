@@ -163,6 +163,7 @@ function OfertaCard({
 
 function CotacaoResultado({
   resultado,
+  transportadoras = [],
   ofertaSelecionadaId,
   onSelecionarOferta,
   coletaAberta,
@@ -170,11 +171,50 @@ function CotacaoResultado({
   onSolicitarColeta,
   children,
 }) {
-  const ofertas = Array.isArray(resultado?.ofertas) && resultado.ofertas.length > 0
-    ? resultado.ofertas
-    : resultado?.sucesso
-      ? [resultado]
-      : []
+  const ofertasRaw = Array.isArray(resultado?.ofertas) ? resultado.ofertas : []
+  const catalogo =
+    (Array.isArray(resultado?.transportadoras) && resultado.transportadoras.length > 0
+      ? resultado.transportadoras
+      : null) ||
+    (Array.isArray(transportadoras) && transportadoras.length > 0 ? transportadoras : null)
+
+  let ofertas = ofertasRaw
+  if (catalogo && catalogo.length > 0) {
+    const byId = new Map(
+      ofertasRaw
+        .filter((o) => o?.transportadoraId)
+        .map((o) => [String(o.transportadoraId).toLowerCase(), o]),
+    )
+    ofertas = catalogo.map((carrier) => {
+      const id = String(carrier.id).toLowerCase()
+      const found = byId.get(id)
+      if (found) {
+        return {
+          ...found,
+          transportadoraId: carrier.id,
+          nome: carrier.nome || found.nome,
+          dominio: carrier.dominio || found.dominio,
+        }
+      }
+      return {
+        transportadoraId: carrier.id,
+        nome: carrier.nome,
+        dominio: carrier.dominio,
+        sucesso: false,
+        erro: -1,
+        mensagem: 'Esta transportadora não retornou cotação nesta consulta.',
+      }
+    })
+    // Ofertas extras (sem id no catálogo) ficam no fim
+    for (const oferta of ofertasRaw) {
+      const id = String(oferta?.transportadoraId || '').toLowerCase()
+      if (!id || !catalogo.some((c) => String(c.id).toLowerCase() === id)) {
+        ofertas.push(oferta)
+      }
+    }
+  } else if (ofertas.length === 0 && resultado?.sucesso) {
+    ofertas = [resultado]
+  }
 
   const enviado = resultado?.enviado || ofertas.find((o) => o.enviado)?.enviado
 
@@ -214,8 +254,8 @@ function CotacaoResultado({
       )}
 
       <div className="ofertas-grid">
-        {ofertas.map((oferta) => {
-          const id = oferta.transportadoraId || 'default'
+        {ofertas.map((oferta, index) => {
+          const id = oferta.transportadoraId || `oferta-${index}`
           const selecionada = ofertaSelecionadaId === id
           return (
             <OfertaCard

@@ -458,6 +458,7 @@ function Cotacao() {
           {resultado && (resultado.sucesso || resultado.ofertas?.length > 0) && (
             <CotacaoResultado
               resultado={resultado}
+              transportadoras={transportadoras}
               ofertaSelecionadaId={ofertaSelecionadaId}
               onSelecionarOferta={selecionarOferta}
               coletaAberta={coletaAberta}

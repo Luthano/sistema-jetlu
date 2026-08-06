@@ -197,15 +197,22 @@ app.post('/api/cotacao', async (req, res) => {
           }
 
           const result = await cotarFn(payload, carrier.credentials)
+          // Montagem explícita: não espalhar o retorno do SSW (evita sobrescrever id/nome)
           const oferta = {
-            ...result,
-            // Depois do result para não sobrescrever com campos do SSW
             transportadoraId: carrier.id,
             nome: carrier.nome,
             dominio: carrier.dominio,
             cnpjPagador,
+            sucesso: Boolean(result.sucesso),
+            erro: result.erro,
+            mensagem: result.mensagem || '',
+            alerta: Boolean(result.alerta),
+            totalFrete: result.totalFrete,
+            prazo: result.prazo,
+            enviado: result.enviado,
+            detalhamento: result.detalhamento,
             simulacao: !persistir,
-            numeroCotacao: persistir ? result.numeroCotacao : '',
+            numeroCotacao: persistir ? result.numeroCotacao || '' : '',
             token: persistir ? result.token : undefined,
           }
 
@@ -245,6 +252,7 @@ app.post('/api/cotacao', async (req, res) => {
     return res.status(sucesso ? 200 : 400).json({
       sucesso,
       simulacao: !persistir,
+      transportadoras: publicCarrierList(),
       mensagem: sucesso
         ? ok.length === 1
           ? `Cotação disponível em ${ok[0].nome}.`
