@@ -398,6 +398,125 @@
   animation: fade-up 0.4s ease both;
 }
 
+.ofertas-intro {
+  padding: 20px 22px 8px;
+}
+
+.ofertas-intro h2 {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  margin-bottom: 6px;
+}
+
+.ofertas-intro p {
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.ofertas-grid {
+  display: grid;
+  gap: 14px;
+  padding: 12px 22px 22px;
+}
+
+.oferta-card {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.oferta-card--selecionada {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 1px var(--brand);
+}
+
+.oferta-card--erro {
+  background: #fafafa;
+  opacity: 0.92;
+}
+
+.oferta-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(135deg, #eef3fb 0%, #fff 70%);
+}
+
+.oferta-nome {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  color: var(--brand-deep);
+}
+
+.oferta-dominio {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.oferta-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.oferta-badge--erro {
+  background: #f3e8e8;
+  color: #8a3030;
+}
+
+.oferta-msg-erro {
+  padding: 14px 16px;
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+  line-height: 1.4;
+}
+
+.oferta-select {
+  border: 1px solid var(--brand);
+  background: #fff;
+  color: var(--brand);
+  font-weight: 700;
+  font-size: 0.82rem;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.oferta-select.is-active,
+.oferta-select:hover {
+  background: var(--brand);
+  color: #fff;
+}
+
+.oferta-valores {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 16px;
+  padding: 16px;
+}
+
+.cnpj-por-carrier {
+  display: grid;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+
+.cnpj-por-carrier-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
 .resultado-hero {
   display: grid;
   grid-template-columns: 1.2fr 1fr;
@@ -602,6 +721,10 @@
   }
 
   .resultado-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .oferta-valores {
     grid-template-columns: 1fr;
   }
 }

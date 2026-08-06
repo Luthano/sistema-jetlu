@@ -1,9 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, Navigate, useLocation } from 'react-router-dom'
+import { Link, Navigate, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
+import { UFS_ATENDIDAS } from '../lib/ufsAtendidas'
+import RastreioPanel from '../components/RastreioPanel'
 import PainelUsuarios from './PainelUsuarios'
 import PainelCadastro from './PainelCadastro'
+import PainelDacte from './PainelDacte'
+import PainelEtiquetas from './PainelEtiquetas'
 import './AuthPages.css'
 import './Painel.css'
 
@@ -18,14 +22,241 @@ function formatDate(value) {
   return new Date(value).toLocaleString('pt-BR')
 }
 
+const ICONS = {
+  home: (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1v-9.5Z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+    </svg>
+  ),
+  track: (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 21s7-4.5 7-11a7 7 0 1 0-14 0c0 6.5 7 11 7 11Z" fill="none" stroke="currentColor" strokeWidth="1.8" />
+      <circle cx="12" cy="10" r="2.4" fill="none" stroke="currentColor" strokeWidth="1.8" />
+    </svg>
+  ),
+  quote: (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M7 4h10a2 2 0 0 1 2 2v14l-3.2-2.2L12.6 20 9.4 17.8 6 20V6a2 2 0 0 1 2-2Z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+      <path d="M9 9h6M9 13h4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  ),
+  cities: (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M4 20V8l6-3v15M10 20V5l10 4v11" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+      <path d="M7 11h0M7 15h0M14 12h0M14 16h0M17 14h0" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+    </svg>
+  ),
+  profile: (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="8" r="3.2" fill="none" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M5.5 19.5c1.6-3.2 4-4.8 6.5-4.8s4.9 1.6 6.5 4.8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  ),
+  users: (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="9" cy="8" r="2.8" fill="none" stroke="currentColor" strokeWidth="1.8" />
+      <circle cx="16.5" cy="9.2" r="2.2" fill="none" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M3.8 19c1.3-2.8 3.3-4.2 5.2-4.2s3.9 1.4 5.2 4.2M13.2 14.2c1.1-.5 2.3-.7 3.5-.5 1.6.3 3 1.4 4 3.3" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  ),
+  support: (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 3a7 7 0 0 0-7 7v2.5A2.5 2.5 0 0 0 7.5 15H9v-4H6.2A5.8 5.8 0 0 1 12 5a5.8 5.8 0 0 1 5.8 6H15v4h1.5A2.5 2.5 0 0 0 19 12.5V10a7 7 0 0 0-7-7Z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+      <path d="M10 19h4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  ),
+  dacte: (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M7 3.5h7.5L19 8v12.5a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-16a1 1 0 0 1 1-1Z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+      <path d="M14 3.5V8h4.5M8.5 12h7M8.5 15.5h7M8.5 19h4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
+  tags: (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M3.5 12.5 12 4h6.5V10.5L10.5 20.5 3.5 12.5Z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+      <circle cx="15.2" cy="8.8" r="1.3" fill="none" stroke="currentColor" strokeWidth="1.6" />
+    </svg>
+  ),
+}
+
+function resolveSection(pathname) {
+  const rest = pathname.replace(/^\/painel\/?/, '')
+  const id = rest.split('/')[0] || 'inicio'
+  return id || 'inicio'
+}
+
+function PainelInicio({
+  isApproved,
+  canUseCotacao,
+  profileComplete,
+  busy,
+  resumo,
+  onNavigate,
+}) {
+  return (
+    <div className="painel-section">
+      <header className="painel-section-head">
+        <div>
+          <p className="painel-eyebrow">Início</p>
+          <h2>Resumo da operação</h2>
+          <p>Acompanhe atalhos e o movimento recente da sua conta.</p>
+        </div>
+      </header>
+
+      <section className="painel-cards" aria-label="Atalhos">
+        {canUseCotacao ? (
+          <Link to="/cotacao" className="painel-card is-action is-primary">
+            <strong>Nova cotação</strong>
+            <span>Calcular frete e gravar no SSW</span>
+          </Link>
+        ) : (
+          <button type="button" className="painel-card is-action" onClick={() => onNavigate('cadastro')}>
+            <strong>Nova cotação</strong>
+            <span>
+              {profileComplete
+                ? 'Aguarde a aprovação do master para cotar.'
+                : 'Complete o cadastro para liberar as cotações.'}
+            </span>
+          </button>
+        )}
+        <button type="button" className="painel-card is-action" onClick={() => onNavigate('rastreamento')}>
+          <strong>Rastrear</strong>
+          <span>Localizar encomenda por DANFE ou NF</span>
+        </button>
+        <button type="button" className="painel-card is-action" onClick={() => onNavigate('cidades')}>
+          <strong>Cidades</strong>
+          <span>Consultar cobertura Jetlu</span>
+        </button>
+      </section>
+
+      {isApproved ? (
+        <section className="painel-cards painel-cards-stats" aria-label="Indicadores">
+          <article className="painel-card is-stat">
+            <span>Cotações</span>
+            <strong>{busy ? '…' : resumo.cotacoes}</strong>
+            <small>Total na conta</small>
+          </article>
+          <article className="painel-card is-stat">
+            <span>Coletas</span>
+            <strong>{busy ? '…' : resumo.coletas}</strong>
+            <small>Total na conta</small>
+          </article>
+          <article className="painel-card is-stat">
+            <span>Último frete</span>
+            <strong>{busy ? '…' : formatMoney(resumo.ultimoFrete)}</strong>
+            <small>{resumo.ultimaData ? formatDate(resumo.ultimaData) : 'Sem registros'}</small>
+          </article>
+        </section>
+      ) : null}
+    </div>
+  )
+}
+
+function PainelCidades() {
+  return (
+    <div className="painel-section">
+      <header className="painel-section-head">
+        <div>
+          <p className="painel-eyebrow">Cidades</p>
+          <h2>Cobertura Jetlu</h2>
+          <p>Estados atendidos e consulta completa de municípios.</p>
+        </div>
+        <Link to="/cidades-atendidas" className="painel-section-cta">
+          Abrir consulta completa
+        </Link>
+      </header>
+
+      <div className="painel-uf-grid">
+        {UFS_ATENDIDAS.map((uf) => (
+          <Link key={uf} to="/cidades-atendidas" className="painel-uf-card">
+            <strong>{uf}</strong>
+            <span>Ver cidades</span>
+          </Link>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function PainelAtendimento() {
+  return (
+    <div className="painel-section">
+      <header className="painel-section-head">
+        <div>
+          <p className="painel-eyebrow">Atendimento</p>
+          <h2>Fale com a Jetlu</h2>
+          <p>Canais para suporte comercial e operacional.</p>
+        </div>
+      </header>
+
+      <div className="painel-support-grid">
+        <article className="painel-support-card">
+          <strong>Comercial</strong>
+          <p>Cotações, tabelas e onboarding de clientes.</p>
+          <a href="mailto:comercial@jetlu.com.br">comercial@jetlu.com.br</a>
+        </article>
+        <article className="painel-support-card">
+          <strong>Operacional</strong>
+          <p>Coletas, prazos e ocorrências de transporte.</p>
+          <a href="mailto:operacional@jetlu.com.br">operacional@jetlu.com.br</a>
+        </article>
+        <article className="painel-support-card">
+          <strong>Site</strong>
+          <p>Conteúdo institucional e canais oficiais.</p>
+          <a href="https://jetlu.com.br" target="_blank" rel="noreferrer">
+            jetlu.com.br
+          </a>
+        </article>
+      </div>
+    </div>
+  )
+}
+
 function Painel() {
-  const { user, loading, signOut, isMaster, isApproved, isPending, isRejected, canUseCotacao, profile, profileComplete, refreshProfile } = useAuth()
+  const {
+    user,
+    loading,
+    signOut,
+    isMaster,
+    isApproved,
+    isPending,
+    isRejected,
+    canUseCotacao,
+    profile,
+    profileComplete,
+    refreshProfile,
+  } = useAuth()
   const location = useLocation()
+  const navigate = useNavigate()
+  const [menuOpen, setMenuOpen] = useState(false)
   const [cotacoesCount, setCotacoesCount] = useState(0)
   const [coletasCount, setColetasCount] = useState(0)
   const [ultimaCotacao, setUltimaCotacao] = useState(null)
   const [erro, setErro] = useState('')
   const [busy, setBusy] = useState(true)
+
+  const section = resolveSection(location.pathname)
+
+  const navItems = useMemo(() => {
+    const items = [
+      { id: 'inicio', label: 'Início', icon: ICONS.home },
+      { id: 'rastreamento', label: 'Rastreamento', icon: ICONS.track },
+      { id: 'dacte', label: 'DACTE', icon: ICONS.dacte },
+      { id: 'etiquetas', label: 'Etiquetas', icon: ICONS.tags },
+      { id: 'cotacoes', label: 'Cotações', icon: ICONS.quote },
+      { id: 'cidades', label: 'Cidades', icon: ICONS.cities },
+      { id: 'cadastro', label: 'Cadastro', icon: ICONS.profile },
+      { id: 'atendimento', label: 'Atendimento', icon: ICONS.support },
+    ]
+    if (isMaster) {
+      items.splice(5, 0, { id: 'usuarios', label: 'Usuários', icon: ICONS.users })
+    }
+    return items
+  }, [isMaster])
+
+  useEffect(() => {
+    setMenuOpen(false)
+  }, [section])
 
   useEffect(() => {
     if (!user || !isApproved) return undefined
@@ -72,88 +303,195 @@ function Painel() {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />
   }
 
+  if (!loading && user && section === 'usuarios' && !isMaster) {
+    return <Navigate to="/painel" replace />
+  }
+
+  const knownSections = new Set(navItems.map((item) => item.id))
+  if (!loading && user && !knownSections.has(section)) {
+    return <Navigate to="/painel" replace />
+  }
+
+  function goSection(id) {
+    navigate(id === 'inicio' ? '/painel' : `/painel/${id}`)
+  }
+
+  const currentNav = navItems.find((item) => item.id === section) || navItems[0]
+
   return (
-    <div className="auth-page painel-page">
-      <div className="painel-wrap">
-        <header className="painel-head">
+    <div className="painel-admin-shell">
+      <aside className={`painel-sidebar ${menuOpen ? 'is-open' : ''}`}>
+        <div className="painel-sidebar-brand">
+          <img src="/home/icone-jetlu.svg" alt="" />
           <div>
-            <p className="auth-kicker">{isMaster ? 'Painel master' : 'Painel do cliente'}</p>
-            <h1>Olá, bem-vindo</h1>
+            <strong>Jetlu</strong>
+            <span>{isMaster ? 'Painel master' : 'Painel do cliente'}</span>
           </div>
-          <button type="button" className="painel-sair" onClick={() => signOut()}>
+        </div>
+
+        <nav className="painel-nav" aria-label="Menu do painel">
+          {navItems.map((item) => (
+            <NavLink
+              key={item.id}
+              to={item.id === 'inicio' ? '/painel' : `/painel/${item.id}`}
+              end={item.id === 'inicio'}
+              className={({ isActive }) => `painel-nav-link ${isActive ? 'is-active' : ''}`}
+            >
+              <span className="painel-nav-icon">{item.icon}</span>
+              {item.label}
+            </NavLink>
+          ))}
+        </nav>
+
+        <div className="painel-sidebar-foot">
+          <button type="button" className="painel-login-chip" onClick={() => signOut()}>
+            <span className="painel-avatar" aria-hidden="true">
+              {(profile?.nome_completo || user?.email || 'J').slice(0, 1).toUpperCase()}
+            </span>
             Sair da conta
           </button>
+        </div>
+      </aside>
+
+      {menuOpen ? (
+        <button
+          type="button"
+          className="painel-sidebar-backdrop"
+          aria-label="Fechar menu"
+          onClick={() => setMenuOpen(false)}
+        />
+      ) : null}
+
+      <div className="painel-main">
+        <header className="painel-main-bar">
+          <button
+            type="button"
+            className="painel-menu-toggle"
+            aria-expanded={menuOpen}
+            aria-label={menuOpen ? 'Fechar menu' : 'Abrir menu'}
+            onClick={() => setMenuOpen((prev) => !prev)}
+          >
+            <span />
+            <span />
+            <span />
+          </button>
+          <div>
+            <p className="painel-eyebrow">{currentNav.label}</p>
+            <h1>Olá, bem-vindo</h1>
+          </div>
         </header>
 
-        {isRejected && (
-          <p className="auth-alert" role="alert">
-            Sua conta foi recusada. Fale com o administrador Jetlu.
-          </p>
-        )}
+        <div className="painel-content">
+          {isRejected && (
+            <p className="auth-alert" role="alert">
+              Sua conta foi recusada. Fale com o administrador Jetlu.
+            </p>
+          )}
 
-        {!isRejected && profile && (
-          <PainelCadastro profile={profile} canDelete={!isMaster} onSaved={refreshProfile} />
-        )}
+          {isPending && profileComplete && section === 'inicio' && (
+            <p className="auth-info">Dados enviados. Aguarde a aprovação do master para usar as cotações.</p>
+          )}
 
-        {isPending && profileComplete && (
-          <p className="auth-info">Dados enviados. Aguarde a aprovação do master para usar as cotações.</p>
-        )}
+          {erro && (
+            <p className="auth-alert" role="alert">
+              {erro}
+            </p>
+          )}
 
-        {isMaster && <PainelUsuarios masterId={user.id} />}
+          {!isRejected && section === 'inicio' && (
+            <PainelInicio
+              isApproved={isApproved}
+              canUseCotacao={canUseCotacao}
+              profileComplete={profileComplete}
+              busy={busy}
+              resumo={resumo}
+              onNavigate={goSection}
+            />
+          )}
 
-        {!isRejected && (
-          <section className="painel-cards" aria-label="Atalhos e resumo">
-            {canUseCotacao ? (
-              <Link to="/cotacao" className="painel-card is-action is-primary">
-                <strong>Nova cotação</strong>
-                <span>Calcular frete e gravar no SSW</span>
-              </Link>
-            ) : (
-              <div className="painel-card is-action">
-                <strong>Nova cotação</strong>
-                <span>
-                  {profileComplete
-                    ? 'Aguarde a aprovação do master para cotar.'
-                    : 'Preencha seus dados cadastrais para liberar as cotações.'}
-                </span>
-              </div>
-            )}
-            <Link to="/rastrear" className="painel-card is-action">
-              <strong>Rastrear</strong>
-              <span>Acompanhar encomenda</span>
-            </Link>
-            <Link to="/cidades-atendidas" className="painel-card is-action">
-              <strong>Cidades</strong>
-              <span>Consultar cobertura Jetlu</span>
-            </Link>
+          {!isRejected && section === 'rastreamento' && (
+            <div className="painel-section">
+              <header className="painel-section-head">
+                <div>
+                  <p className="painel-eyebrow">Rastreamento</p>
+                  <h2>Localize sua encomenda</h2>
+                  <p>Consulte por chave DANFE ou NF + CPF/CNPJ.</p>
+                </div>
+              </header>
+              <RastreioPanel />
+            </div>
+          )}
 
-            {isApproved ? (
-              <>
+          {!isRejected && section === 'dacte' && <PainelDacte />}
+
+          {!isRejected && section === 'etiquetas' && <PainelEtiquetas />}
+
+          {!isRejected && section === 'cotacoes' && (
+            <div className="painel-section">
+              <header className="painel-section-head">
+                <div>
+                  <p className="painel-eyebrow">Cotações</p>
+                  <h2>Frete e coleta</h2>
+                  <p>Simule valores e acompanhe o histórico da conta.</p>
+                </div>
+                {canUseCotacao ? (
+                  <Link to="/cotacao" className="painel-section-cta">
+                    Nova cotação
+                  </Link>
+                ) : null}
+              </header>
+
+              <section className="painel-cards painel-cards-stats" aria-label="Resumo de cotações">
                 <article className="painel-card is-stat">
                   <span>Cotações</span>
-                  <strong>{busy ? '…' : resumo.cotacoes}</strong>
+                  <strong>{isApproved ? (busy ? '…' : resumo.cotacoes) : '—'}</strong>
                   <small>Total na conta</small>
                 </article>
                 <article className="painel-card is-stat">
                   <span>Coletas</span>
-                  <strong>{busy ? '…' : resumo.coletas}</strong>
+                  <strong>{isApproved ? (busy ? '…' : resumo.coletas) : '—'}</strong>
                   <small>Total na conta</small>
                 </article>
                 <article className="painel-card is-stat">
                   <span>Último frete</span>
-                  <strong>{busy ? '…' : formatMoney(resumo.ultimoFrete)}</strong>
+                  <strong>{isApproved ? (busy ? '…' : formatMoney(resumo.ultimoFrete)) : '—'}</strong>
                   <small>{resumo.ultimaData ? formatDate(resumo.ultimaData) : 'Sem registros'}</small>
                 </article>
-              </>
-            ) : null}
-          </section>
-        )}
+              </section>
 
-        {erro && (
-          <p className="auth-alert" role="alert">
-            {erro}
-          </p>
-        )}
+              {!canUseCotacao && (
+                <p className="auth-info">
+                  {profileComplete
+                    ? 'Sua conta ainda não foi aprovada para cotar.'
+                    : 'Complete o cadastro para solicitar acesso às cotações.'}
+                </p>
+              )}
+            </div>
+          )}
+
+          {!isRejected && section === 'cidades' && <PainelCidades />}
+
+          {!isRejected && section === 'cadastro' && profile && (
+            <div className="painel-section">
+              <header className="painel-section-head">
+                <div>
+                  <p className="painel-eyebrow">Cadastro</p>
+                  <h2>Dados da conta</h2>
+                  <p>Mantenha telefone, documentos e endereço atualizados.</p>
+                </div>
+              </header>
+              <PainelCadastro profile={profile} canDelete={!isMaster} onSaved={refreshProfile} />
+            </div>
+          )}
+
+          {isMaster && section === 'usuarios' && (
+            <div className="painel-section">
+              <PainelUsuarios masterId={user.id} />
+            </div>
+          )}
+
+          {!isRejected && section === 'atendimento' && <PainelAtendimento />}
+        </div>
       </div>
     </div>
   )

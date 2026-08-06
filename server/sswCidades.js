@@ -1,4 +1,5 @@
 import { UFS_ATENDIDAS } from '../src/lib/ufsAtendidas.js'
+import { getDefaultCredentials } from './sswCarriers.js'
 
 const CACHE_TTL_MS = 15 * 60 * 1000
 const cache = new Map()
@@ -31,11 +32,7 @@ const UF_PESQUISA = {
 }
 
 function getDominio() {
-  const dominio = String(process.env.SSW_DOMINIO || '').trim().toUpperCase()
-  if (!dominio) {
-    throw new Error('SSW_DOMINIO não configurado no .env')
-  }
-  return dominio
+  return String(getDefaultCredentials().dominio || '').trim().toUpperCase()
 }
 
 function getOrigens() {

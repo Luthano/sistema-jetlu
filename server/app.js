@@ -7,6 +7,11 @@ import { rastrearPorDanfe, rastrearPorDocumento } from './sswTracking.js'
 import { cotar as cotarOficial, solicitarColeta } from './sswCotacaoColeta.js'
 import { buscarCidadesPorNome, listarCidadesPorUf } from './sswCidades.js'
 import { podePersistirCotacao, salvarColetaHistorico, salvarCotacaoHistorico } from './supabase.js'
+import {
+  listActiveCarriers,
+  publicCarrierList,
+  resolveCnpjPagador,
+} from './sswCarriers.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 dotenv.config({ path: path.resolve(__dirname, '../.env') })
@@ -20,14 +25,18 @@ app.get('/api/health', (_req, res) => {
   res.json({ ok: true })
 })
 
+app.get('/api/transportadoras', (_req, res) => {
+  res.json({ transportadoras: publicCarrierList() })
+})
+
 app.get('/api/mercadorias', async (req, res) => {
   try {
-    const { cnpjPagador } = req.query
+    const { cnpjPagador, transportadoraId } = req.query
     if (!cnpjPagador) {
       return res.status(400).json({ erro: -1, mensagem: 'Informe o CNPJ do pagador', mercadorias: [] })
     }
 
-    const result = await getMercadorias(cnpjPagador)
+    const result = await getMercadorias(cnpjPagador, transportadoraId || undefined)
     if (result.erro && result.erro < 0) {
       return res.status(400).json(result)
     }
@@ -119,6 +128,14 @@ app.post('/api/coleta', async (req, res) => {
       })
     }
 
+    if (!body.transportadoraId) {
+      return res.status(400).json({
+        sucesso: false,
+        mensagem: 'Informe a transportadora da cotação escolhida (transportadoraId).',
+        numeroColeta: '',
+      })
+    }
+
     const result = await solicitarColeta(body)
     if (result.sucesso) {
       await salvarColetaHistorico(req, body, result)
@@ -145,25 +162,109 @@ app.post('/api/cotacao', async (req, res) => {
         erro: -1,
         mensagem: `Campos obrigatórios ausentes: ${missing.join(', ')}`,
         sucesso: false,
+        ofertas: [],
+      })
+    }
+
+    const carriers = listActiveCarriers()
+    if (carriers.length === 0) {
+      return res.status(500).json({
+        erro: -2,
+        mensagem: 'Nenhuma transportadora SSW configurada no servidor.',
+        sucesso: false,
+        ofertas: [],
       })
     }
 
     const persistir = await podePersistirCotacao(req)
-    const result = persistir ? await cotarOficial(body) : await cotarSimulacao(body)
+    const cotarFn = persistir ? cotarOficial : cotarSimulacao
 
-    if (result.erro < 0) {
-      return res.status(400).json(result)
-    }
+    const ofertas = await Promise.all(
+      carriers.map(async (carrier) => {
+        const cnpjPagador = resolveCnpjPagador(carrier.id, body)
+        const payload = { ...body, cnpjPagador }
 
-    if (persistir && result.sucesso) {
-      await salvarCotacaoHistorico(req, body, result)
-    }
+        try {
+          if (!cnpjPagador) {
+            return {
+              transportadoraId: carrier.id,
+              nome: carrier.nome,
+              dominio: carrier.dominio,
+              sucesso: false,
+              erro: -1,
+              mensagem: 'CNPJ/CPF pagador não informado para esta transportadora.',
+            }
+          }
 
-    return res.json({
-      ...result,
+          const result = await cotarFn(payload, carrier.credentials)
+          const oferta = {
+            transportadoraId: carrier.id,
+            nome: carrier.nome,
+            dominio: carrier.dominio,
+            cnpjPagador,
+            ...result,
+            simulacao: !persistir,
+            numeroCotacao: persistir ? result.numeroCotacao : '',
+            token: persistir ? result.token : undefined,
+          }
+
+          if (persistir && oferta.sucesso) {
+            await salvarCotacaoHistorico(req, { ...payload, transportadoraId: carrier.id }, oferta)
+          }
+
+          return oferta
+        } catch (error) {
+          console.error(`Erro cotar ${carrier.id}:`, error)
+          return {
+            transportadoraId: carrier.id,
+            nome: carrier.nome,
+            dominio: carrier.dominio,
+            cnpjPagador,
+            sucesso: false,
+            erro: -2,
+            mensagem: error.message || 'Erro ao cotar nesta transportadora',
+          }
+        }
+      }),
+    )
+
+    const ok = ofertas.filter((o) => o.sucesso)
+    ok.sort((a, b) => {
+      const fa = Number(a.totalFrete)
+      const fb = Number(b.totalFrete)
+      if (Number.isFinite(fa) && Number.isFinite(fb)) return fa - fb
+      return 0
+    })
+    const fail = ofertas.filter((o) => !o.sucesso)
+    const ofertasOrdenadas = [...ok, ...fail]
+
+    const sucesso = ok.length > 0
+    const melhor = ok[0] || null
+
+    return res.status(sucesso ? 200 : 400).json({
+      sucesso,
       simulacao: !persistir,
-      numeroCotacao: persistir ? result.numeroCotacao : '',
-      token: persistir ? result.token : undefined,
+      mensagem: sucesso
+        ? ok.length === 1
+          ? `Cotação disponível em ${ok[0].nome}.`
+          : `${ok.length} ofertas encontradas.`
+        : ofertasOrdenadas.map((o) => `${o.nome}: ${o.mensagem || 'sem cobertura'}`).join(' | ') ||
+          'Nenhuma transportadora retornou cotação.',
+      ofertas: ofertasOrdenadas,
+      ...(melhor
+        ? {
+            erro: melhor.erro,
+            alerta: melhor.alerta,
+            totalFrete: melhor.totalFrete,
+            prazo: melhor.prazo,
+            numeroCotacao: melhor.numeroCotacao,
+            token: melhor.token,
+            enviado: melhor.enviado,
+            detalhamento: melhor.detalhamento,
+            transportadoraId: melhor.transportadoraId,
+            nomeTransportadora: melhor.nome,
+          }
+        : { erro: -1 }),
     })
   } catch (error) {
     console.error('Erro cotar:', error)
@@ -171,6 +272,7 @@ app.post('/api/cotacao', async (req, res) => {
       erro: -2,
       mensagem: error.message || 'Erro interno ao cotar frete',
       sucesso: false,
+      ofertas: [],
     })
   }
 })

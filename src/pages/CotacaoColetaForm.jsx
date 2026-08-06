@@ -28,7 +28,17 @@ function defaultTipoPagamento(quoteForm) {
   return 'O'
 }
 
-function CotacaoColetaForm({ quoteForm, totais, cotacao, token, locked, numeroColeta, onSuccess }) {
+function CotacaoColetaForm({
+  quoteForm,
+  totais,
+  cotacao,
+  token,
+  transportadoraId,
+  transportadoraNome,
+  locked,
+  numeroColeta,
+  onSuccess,
+}) {
   const bounds = useMemo(() => {
     const min = new Date()
     const max = new Date()
@@ -70,9 +80,13 @@ function CotacaoColetaForm({ quoteForm, totais, cotacao, token, locked, numeroCo
       setErro('Gere a cotação novamente antes de solicitar a coleta.')
       return
     }
+    if (!transportadoraId) {
+      setErro('Selecione a transportadora da oferta antes de solicitar a coleta.')
+      return
+    }
 
     const confirmed = window.confirm(
-      'Isso gera uma coleta real no SSW e não é um rascunho. Deseja continuar?',
+      `Isso gera uma coleta real no SSW${transportadoraNome ? ` (${transportadoraNome})` : ''} e não é um rascunho. Deseja continuar?`,
     )
     if (!confirmed) return
 
@@ -104,6 +118,7 @@ function CotacaoColetaForm({ quoteForm, totais, cotacao, token, locked, numeroCo
         body: JSON.stringify({
           cotacao,
           token,
+          transportadoraId,
           solicitante,
           limiteColeta: coleta.limiteColeta,
           observacao,
@@ -141,7 +156,7 @@ function CotacaoColetaForm({ quoteForm, totais, cotacao, token, locked, numeroCo
       <div className="section-heading">
         <span className="section-step">C</span>
         <div>
-          <h2>Solicitar coleta</h2>
+          <h2>Solicitar coleta{transportadoraNome ? ` — ${transportadoraNome}` : ''}</h2>
         </div>
       </div>
 

@@ -1,3 +1,5 @@
+import { getDefaultCredentials } from './sswCarriers.js'
+
 const TRACKING_DANFE_URL = 'https://ssw.inf.br/api/trackingdanfe'
 const TRACKING_REMETENTE_URL = 'https://ssw.inf.br/api/tracking'
 const TRACKING_DEST_URL = 'https://ssw.inf.br/api/trackingdest'
@@ -9,14 +11,11 @@ function onlyDigits(value) {
 }
 
 function getCredentials() {
-  const { SSW_DOMINIO, SSW_LOGIN, SSW_SENHA } = process.env
-  if (!SSW_DOMINIO || !SSW_LOGIN || !SSW_SENHA) {
-    throw new Error('Credenciais SSW não configuradas. Preencha SSW_DOMINIO, SSW_LOGIN e SSW_SENHA no .env')
-  }
+  const cred = getDefaultCredentials()
   return {
-    dominio: SSW_DOMINIO,
-    usuario: SSW_LOGIN,
-    senha: SSW_SENHA,
+    dominio: cred.dominio,
+    usuario: cred.login,
+    senha: cred.senha,
   }
 }
 
@@ -56,32 +55,53 @@ function normalizeEvent(event = {}) {
   }
 }
 
+function asDocumentList(value) {
+  if (!value) return []
+  return Array.isArray(value) ? value : [value]
+}
+
 function collectDocuments(payload) {
-  if (!payload) return []
-  if (Array.isArray(payload.documentos)) return payload.documentos
-  if (payload.documento) {
-    return Array.isArray(payload.documento) ? payload.documento : [payload.documento]
-  }
+  if (!payload || typeof payload !== 'object') return []
+
+  // Formatos oficiais observados nas WebAPIs SSW:
+  // 1) { documentos: [ { header, tracking }, ... ] }
+  // 2) { documento: { header, tracking } }  ou array
+  // 3) { header, tracking } na raiz (tracking / trackingdest / trackingpag)
+  if (payload.documentos != null) return asDocumentList(payload.documentos)
+  if (payload.documento != null) return asDocumentList(payload.documento)
+
+  const hasRootTracking = payload.tracking != null || payload.ocorrencias != null || payload.header != null
+  if (hasRootTracking) return [payload]
+
+  return []
+}
+
+function collectEvents(doc) {
+  const tracking = doc?.tracking ?? doc?.ocorrencias ?? doc?.header?.tracking ?? []
+  if (Array.isArray(tracking)) return tracking
+  if (tracking && typeof tracking === 'object') return [tracking]
   return []
 }
 
 function normalizeResponse(payload) {
   const documentos = collectDocuments(payload).map((doc) => {
     const header = doc.header || doc
-    const tracking = doc.tracking || doc.ocorrencias || []
     return {
       remetente: header.remetente || '',
       destinatario: header.destinatario || '',
       nroNf: String(header.nro_nf ?? header.nroNf ?? ''),
       pedido: header.pedido || '',
-      eventos: (Array.isArray(tracking) ? tracking : []).map(normalizeEvent),
+      eventos: collectEvents(doc).map(normalizeEvent),
     }
   }).filter((doc) => doc.eventos.length > 0 || doc.nroNf || doc.remetente || doc.destinatario)
 
-  const sucesso = Boolean(payload?.success) && documentos.length > 0
+  const sucesso = Boolean(payload?.success ?? payload?.sucesso) && documentos.length > 0
   return {
     sucesso,
-    mensagem: payload?.message || (sucesso ? 'Documento localizado com sucesso' : 'Nenhum documento localizado'),
+    mensagem:
+      payload?.message ||
+      payload?.mensagem ||
+      (sucesso ? 'Documento localizado com sucesso' : 'Nenhum documento localizado'),
     documentos,
   }
 }
@@ -97,22 +117,32 @@ export async function rastrearPorDanfe(chaveNfe) {
 }
 
 async function rastrearCnpjNasApis({ cnpj, nroNf, senha }) {
-  const siglaEmp = process.env.SSW_DOMINIO || undefined
-  const body = {
-    cnpj,
-    nro_nf: Number(nroNf),
-    ...(siglaEmp ? { sigla_emp: siglaEmp } : {}),
-    ...(senha ? { senha } : {}),
-  }
-
+  const siglaEmp = getDefaultCredentials().dominio || undefined
   const endpoints = [TRACKING_DEST_URL, TRACKING_REMETENTE_URL, TRACKING_PAG_URL]
+  const bodyVariants = [
+    {
+      cnpj,
+      nro_nf: Number(nroNf),
+      ...(siglaEmp ? { sigla_emp: siglaEmp } : {}),
+      ...(senha ? { senha } : {}),
+    },
+    // Fallback sem filtro de empresa, caso a carga esteja em parceiro/rede SSW
+    {
+      cnpj,
+      nro_nf: Number(nroNf),
+      ...(senha ? { senha } : {}),
+    },
+  ]
+
   let last = { success: false, message: 'Nenhum documento localizado' }
 
-  for (const url of endpoints) {
-    const payload = await postJson(url, body)
-    const normalized = normalizeResponse(payload)
-    if (normalized.sucesso) return normalized
-    last = payload
+  for (const body of bodyVariants) {
+    for (const url of endpoints) {
+      const payload = await postJson(url, body)
+      const normalized = normalizeResponse(payload)
+      if (normalized.sucesso) return normalized
+      last = payload
+    }
   }
 
   return normalizeResponse(last)
@@ -135,7 +165,15 @@ export async function rastrearPorDocumento({ documento, nroNf, senha }) {
       cpf: doc,
       nro_nf: Number(nf),
     })
-    return normalizeResponse(payload)
+    const normalized = normalizeResponse(payload)
+    if (!normalized.sucesso && /acesso\s*inv[aá]lido/i.test(normalized.mensagem || '')) {
+      return {
+        ...normalized,
+        mensagem:
+          'Credenciais SSW sem permissão para rastreio de CPF (trackingpf). Use a chave DANFE ou peça liberação do usuário no SSW.',
+      }
+    }
+    return normalized
   }
 
   if (doc.length === 14) {

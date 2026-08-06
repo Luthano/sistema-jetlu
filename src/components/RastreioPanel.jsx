@@ -57,9 +57,17 @@ function RastreioPanel() {
             : { modo: 'documento', documento, nroNf, senha },
         ),
       })
-      const data = await response.json()
+      const data = await response.json().catch(() => null)
+      if (!data) {
+        setErro('Resposta inválida do servidor de rastreio.')
+        return
+      }
       if (!data.sucesso) {
         setErro(data.mensagem || 'Encomenda não localizada.')
+        return
+      }
+      if (!Array.isArray(data.documentos) || data.documentos.length === 0) {
+        setErro(data.mensagem || 'Encomenda localizada, mas sem eventos para exibir.')
         return
       }
       setResultado(data)
@@ -160,21 +168,25 @@ function RastreioPanel() {
             {doc.remetente ? <p><strong>Remetente</strong> {doc.remetente}</p> : null}
             {doc.destinatario ? <p><strong>Destinatário</strong> {doc.destinatario}</p> : null}
           </div>
-          <ol className="rastreio-timeline">
-            {doc.eventos.map((evento, eventIndex) => (
-              <li key={`${evento.dataHora}-${eventIndex}`}>
-                <div>
-                  <strong>{evento.ocorrencia || 'Atualização'}</strong>
-                  <p>{evento.descricao}</p>
-                  {evento.recebedor ? <p>Recebedor: {evento.recebedor}</p> : null}
-                </div>
-                <aside>
-                  <time>{formatDateTime(evento.dataHora)}</time>
-                  <span>{[evento.cidade, evento.filial].filter(Boolean).join(' · ')}</span>
-                </aside>
-              </li>
-            ))}
-          </ol>
+          {(doc.eventos?.length ?? 0) === 0 ? (
+            <p className="rastreio-alert">Documento encontrado, sem eventos de rastreio disponíveis.</p>
+          ) : (
+            <ol className="rastreio-timeline">
+              {doc.eventos.map((evento, eventIndex) => (
+                <li key={`${evento.dataHora}-${eventIndex}`}>
+                  <div>
+                    <strong>{evento.ocorrencia || 'Atualização'}</strong>
+                    <p>{evento.descricao}</p>
+                    {evento.recebedor ? <p>Recebedor: {evento.recebedor}</p> : null}
+                  </div>
+                  <aside>
+                    <time>{formatDateTime(evento.dataHora)}</time>
+                    <span>{[evento.cidade, evento.filial].filter(Boolean).join(' · ')}</span>
+                  </aside>
+                </li>
+              ))}
+            </ol>
+          )}
         </article>
       ))}
     </div>

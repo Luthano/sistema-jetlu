@@ -1,4 +1,5 @@
 import { XMLParser } from 'fast-xml-parser'
+import { getDefaultCredentials, getCarrier } from './sswCarriers.js'
 
 const NS = 'urn:sswinfbr.sswCotacao'
 const parser = new XMLParser({
@@ -37,16 +38,17 @@ function buildSoapEnvelope(method, fields) {
 </soap:Envelope>`
 }
 
-function getCredentials() {
-  const { SSW_DOMINIO, SSW_LOGIN, SSW_SENHA } = process.env
-  if (!SSW_DOMINIO || !SSW_LOGIN || !SSW_SENHA) {
-    throw new Error('Credenciais SSW não configuradas. Preencha SSW_DOMINIO, SSW_LOGIN e SSW_SENHA no .env')
+function resolveCredentials(credentialsOrCarrierId) {
+  if (credentialsOrCarrierId && typeof credentialsOrCarrierId === 'object') {
+    const { dominio, login, senha } = credentialsOrCarrierId
+    if (dominio && login && senha) return { dominio, login, senha }
   }
-  return {
-    dominio: SSW_DOMINIO,
-    login: SSW_LOGIN,
-    senha: SSW_SENHA,
+  if (typeof credentialsOrCarrierId === 'string' && credentialsOrCarrierId.trim()) {
+    const carrier = getCarrier(credentialsOrCarrierId)
+    if (carrier) return carrier.credentials
+    throw new Error(`Transportadora "${credentialsOrCarrierId}" não configurada.`)
   }
+  return getDefaultCredentials()
 }
 
 function getEndpoint() {
@@ -108,8 +110,8 @@ function onlyDigits(value) {
   return String(value ?? '').replace(/\D/g, '')
 }
 
-export async function cotar(payload) {
-  const credentials = getCredentials()
+export async function cotar(payload, credentialsOrCarrierId) {
+  const credentials = resolveCredentials(credentialsOrCarrierId)
   const peso = Number(payload.peso) || 0
   const volume = Number(payload.volume) || 0
 
@@ -197,8 +199,8 @@ export async function cotar(payload) {
   }
 }
 
-export async function getMercadorias(cnpjPagador) {
-  const credentials = getCredentials()
+export async function getMercadorias(cnpjPagador, credentialsOrCarrierId) {
+  const credentials = resolveCredentials(credentialsOrCarrierId)
   const fields = {
     ...credentials,
     cnpjPagador: onlyDigits(cnpjPagador),

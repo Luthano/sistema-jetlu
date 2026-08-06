@@ -20,6 +20,7 @@ const TABS = [
 
 function isTabActive(pathname, to) {
   if (to === '/') return pathname === '/'
+  if (to === '/painel') return pathname === '/painel' || pathname.startsWith('/painel/')
   return pathname === to || pathname.startsWith(`${to}/`)
 }
 
@@ -144,7 +145,7 @@ function AppShell() {
           <Route path="/cotacao" element={<Cotacao />} />
           <Route path="/cidades-atendidas" element={<CidadesAtendidas />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/painel" element={<Painel />} />
+          <Route path="/painel/*" element={<Painel />} />
           <Route path="/historico" element={<Historico />} />
         </Routes>
       </main>
