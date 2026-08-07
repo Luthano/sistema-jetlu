@@ -5,11 +5,38 @@ import Reveal from '../components/Reveal'
 import {
   buscarCidadesPorNome,
   buscarCidadesPorUf,
+  cityName,
+  citySiglas,
   formatCityName,
   matchCity,
 } from './cidadesBusca'
 import { UFS_ATENDIDAS } from '../lib/ufsAtendidas'
 import './CidadesAtendidas.css'
+
+/** Cache local só vale se a resposta já for multi-carrier (com carriers + siglas). */
+function cacheUfValido(data) {
+  if (!data || !Array.isArray(data.cidades) || !Array.isArray(data.carriers)) return false
+  if (data.cidades.length === 0) return true
+  const first = data.cidades[0]
+  return Boolean(first && typeof first === 'object' && Array.isArray(first.siglas))
+}
+
+function SiglasBadges({ siglas }) {
+  if (!siglas?.length) return null
+  return (
+    <span className="cidades-siglas" aria-label={`Atendida por ${siglas.join(' e ')}`}>
+      {siglas.map((sigla) => (
+        <span
+          key={sigla}
+          className={`cidades-sigla is-${sigla.toLowerCase()}`}
+          title={sigla === 'JL' ? 'Jetlu' : sigla === 'LS' ? 'Lopesul' : sigla}
+        >
+          {sigla}
+        </span>
+      ))}
+    </span>
+  )
+}
 
 function CidadesAtendidas() {
   const [uf, setUf] = useState('')
@@ -25,12 +52,13 @@ function CidadesAtendidas() {
     const lista = resultado?.cidades || []
     const termo = cidade.trim().toLocaleLowerCase('pt-BR')
     if (!termo) return lista
-    return lista.filter((item) => item.toLocaleLowerCase('pt-BR').includes(termo))
+    return lista.filter((item) => cityName(item).toLocaleLowerCase('pt-BR').includes(termo))
   }, [resultado, cidade])
 
-  async function carregarUf(proximaUf) {
+  async function carregarUf(proximaUf, { forcar = false } = {}) {
     if (!proximaUf) return null
-    if (cacheUf[proximaUf]) return cacheUf[proximaUf]
+    const cached = cacheUf[proximaUf]
+    if (!forcar && cacheUfValido(cached)) return cached
 
     const data = await buscarCidadesPorUf(proximaUf)
     setCacheUf((prev) => ({ ...prev, [proximaUf]: data }))
@@ -62,7 +90,8 @@ function CidadesAtendidas() {
           const encontrada = matchCity(cidadeInformada, data.cidades)
           setConsulta({
             uf: ufInformada,
-            cidade: encontrada || cidadeInformada,
+            cidade: encontrada ? cityName(encontrada) : cidadeInformada,
+            siglas: encontrada ? citySiglas(encontrada) : [],
             atendida: Boolean(encontrada),
           })
         } else {
@@ -71,10 +100,14 @@ function CidadesAtendidas() {
       } else {
         const data = await buscarCidadesPorNome(cidadeInformada)
         const ufs = [...new Set((data.matches || []).map((item) => item.uf))]
+        const siglas = [
+          ...new Set((data.matches || []).flatMap((item) => item.siglas || [])),
+        ]
         setResultado(data)
         setConsulta({
           uf: ufs.join(', '),
           cidade: cidadeInformada,
+          siglas,
           atendida: data.total > 0,
         })
       }
@@ -107,6 +140,11 @@ function CidadesAtendidas() {
     setCidade('')
     setUf(proximaUf)
     setConsulta(null)
+    setCacheUf((prev) => {
+      const next = { ...prev }
+      delete next[proximaUf]
+      return next
+    })
     await pesquisar({
       ufValor: proximaUf,
       cidadeValor: '',
@@ -150,9 +188,10 @@ function CidadesAtendidas() {
                     list="cidades-sugestoes"
                   />
                   <datalist id="cidades-sugestoes">
-                    {sugestoes.slice(0, 40).map((item) => (
-                      <option key={item} value={formatCityName(item)} />
-                    ))}
+                    {sugestoes.slice(0, 40).map((item) => {
+                      const nome = cityName(item)
+                      return <option key={nome} value={formatCityName(nome)} />
+                    })}
                   </datalist>
                 </label>
                 <button type="submit" className="cidades-cta" disabled={loading}>
@@ -178,6 +217,7 @@ function CidadesAtendidas() {
                   {formatCityName(consulta.cidade)}
                   {consulta.uf ? ` / ${consulta.uf}` : ''}
                 </p>
+                {consulta.atendida && <SiglasBadges siglas={consulta.siglas} />}
                 {consulta.atendida ? (
                   <Link to="/cotacao" className="cidades-cta cidades-cta-inline">
                     Fazer cotação
@@ -205,16 +245,19 @@ function CidadesAtendidas() {
                   <p className="cidades-map-note">Nenhuma cidade encontrada com esse filtro.</p>
                 ) : (
                   <ul className="cidades-lista">
-                    {cidadesFiltradas.map((item) => (
-                      <li
-                        key={item}
-                        className={
-                          consulta?.atendida && matchCity(consulta.cidade, [item]) ? 'is-match' : ''
-                        }
-                      >
-                        {formatCityName(item)}
-                      </li>
-                    ))}
+                    {cidadesFiltradas.map((item) => {
+                      const nome = cityName(item)
+                      const siglas = citySiglas(item)
+                      const isMatch =
+                        consulta?.atendida &&
+                        Boolean(matchCity(consulta.cidade, [{ nome, siglas }]))
+                      return (
+                        <li key={`${nome}-${siglas.join('-')}`} className={isMatch ? 'is-match' : ''}>
+                          <span className="cidades-lista-nome">{formatCityName(nome)}</span>
+                          <SiglasBadges siglas={siglas} />
+                        </li>
+                      )
+                    })}
                   </ul>
                 )}
               </>

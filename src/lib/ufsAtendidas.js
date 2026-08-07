@@ -1,4 +1,21 @@
-export const UFS_ATENDIDAS = ['BA', 'GO', 'MS', 'MT', 'PR', 'RS', 'SC', 'SP']
+/**
+ * UFs disponíveis na consulta pública de cidades (Jetlu + Lopesul).
+ */
+export const UFS_ATENDIDAS = [
+  'BA',
+  'ES',
+  'GO',
+  'MS',
+  'MT',
+  'PA',
+  'PE',
+  'PR',
+  'RJ',
+  'RS',
+  'SC',
+  'SP',
+  'TO',
+]
 
 export const UF_MAPA_HREF = {
   acre: 'AC',

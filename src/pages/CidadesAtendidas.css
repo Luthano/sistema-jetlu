@@ -125,6 +125,35 @@
   font-weight: 600;
 }
 
+.cidades-siglas {
+  display: inline-flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.cidades-sigla {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+}
+
+.cidades-sigla.is-jl {
+  background: #e8f0ff;
+  color: #062855;
+}
+
+.cidades-sigla.is-ls {
+  background: #fff0f1;
+  color: #a6020c;
+}
+
 .cidades-resultado {
   margin-top: 36px;
 }
@@ -184,7 +213,7 @@
 .cidades-lista {
   list-style: none;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 8px 16px;
   padding: 18px;
   border: 1px solid #e6ebf0;
@@ -193,19 +222,31 @@
 }
 
 .cidades-lista li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
   padding: 8px 0;
   border-bottom: 1px solid #edf1f5;
   color: var(--jetlu-navy);
   font-size: 0.92rem;
 }
 
-.cidades-lista li:nth-child(odd) {
+.cidades-lista-nome {
+  min-width: 0;
+}
+
+.cidades-lista li:nth-child(odd) .cidades-lista-nome {
   font-weight: 600;
 }
 
 .cidades-lista li.is-match {
   color: #1f5b2d;
   font-weight: 700;
+}
+
+.cidades-status .cidades-siglas {
+  margin: 8px 0 4px;
 }
 
 @media (max-width: 900px) {

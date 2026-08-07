@@ -1,8 +1,21 @@
 import { UFS_ATENDIDAS } from '../src/lib/ufsAtendidas.js'
-import { getDefaultCredentials } from './sswCarriers.js'
+import { getDefaultCredentials, listActiveCarriers } from './sswCarriers.js'
+import {
+  aplicarOverridesCidades,
+  siglaComercial,
+} from './cidadesOverrides.js'
 
 const CACHE_TTL_MS = 15 * 60 * 1000
+const CACHE_VERSION = 'v2-overrides'
 const cache = new Map()
+
+/** Siglas exibidas na UI: Lopesul = LS, Jetlu = JL */
+const SIGLA_POR_CARRIER = {
+  lopesul: 'LS',
+  jetlu: 'JL',
+}
+
+const ORDEM_SIGLAS = ['JL', 'LS']
 
 export { UFS_ATENDIDAS }
 
@@ -31,10 +44,6 @@ const UF_PESQUISA = {
   TO: '(TO)TOCANTINS',
 }
 
-function getDominio() {
-  return String(getDefaultCredentials().dominio || '').trim().toUpperCase()
-}
-
 function getOrigens() {
   const raw = process.env.SSW_CIDADES_ORIGEM || 'CASCAVEL / PR,MARINGA / PR,LONDRINA / PR'
   return raw
@@ -49,6 +58,16 @@ function getEndpoint() {
 
 function normalizeUf(value) {
   return String(value ?? '').trim().toUpperCase()
+}
+
+function normalizeText(value) {
+  return String(value ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toUpperCase()
 }
 
 function decodeHtml(value) {
@@ -91,6 +110,54 @@ function parseCidades(html) {
   return [...new Set(cidades)].sort((a, b) => a.localeCompare(b, 'pt-BR'))
 }
 
+function ordenarSiglas(siglas) {
+  return [...siglas].sort((a, b) => {
+    const ia = ORDEM_SIGLAS.indexOf(a)
+    const ib = ORDEM_SIGLAS.indexOf(b)
+    if (ia === -1 && ib === -1) return a.localeCompare(b)
+    if (ia === -1) return 1
+    if (ib === -1) return -1
+    return ia - ib
+  })
+}
+
+function siglaDoCarrier(carrier) {
+  if (SIGLA_POR_CARRIER[carrier.id]) return SIGLA_POR_CARRIER[carrier.id]
+  const dominio = String(carrier.dominio || '').toUpperCase()
+  if (dominio === 'JEU') return 'JL'
+  if (dominio === 'LSU') return 'LS'
+  return null
+}
+
+/** Jetlu + Lopesul com credenciais; fallback no domínio padrão. */
+function carriersParaCidades() {
+  const ativos = listActiveCarriers()
+    .map((carrier) => {
+      const sigla = siglaDoCarrier(carrier)
+      if (!sigla) return null
+      return { ...carrier, sigla }
+    })
+    .filter(Boolean)
+
+  if (ativos.length > 0) return ativos
+
+  const legacy = getDefaultCredentials()
+  const dominio = String(legacy?.dominio || '').trim()
+  if (!dominio) return []
+
+  const sigla = dominio.toUpperCase() === 'JEU' ? 'JL' : dominio.toUpperCase() === 'LSU' ? 'LS' : null
+  if (!sigla) return []
+
+  return [
+    {
+      id: sigla === 'JL' ? 'jetlu' : 'lopesul',
+      nome: sigla === 'JL' ? 'Jetlu' : 'Lopesul',
+      dominio,
+      sigla,
+    },
+  ]
+}
+
 async function consultarOrigem(dominio, origem, uf) {
   const body = new URLSearchParams({
     sigla_emp: dominio,
@@ -125,6 +192,60 @@ async function consultarOrigem(dominio, origem, uf) {
   }
 }
 
+async function listarCidadesCarrier(carrier, uf, origens) {
+  const unicas = new Set()
+  const mensagens = []
+
+  for (const origem of origens) {
+    try {
+      const result = await consultarOrigem(carrier.dominio, origem, uf)
+      result.cidades.forEach((cidade) => unicas.add(cidade))
+      if (result.mensagem && result.cidades.length === 0) {
+        mensagens.push(result.mensagem)
+      }
+    } catch (error) {
+      mensagens.push(error.message || `Falha ao consultar ${carrier.sigla}`)
+      console.error(`[cidades] ${carrier.sigla} origem ${origem} UF ${uf}:`, error.message)
+    }
+  }
+
+  return {
+    sigla: carrier.sigla,
+    nome: carrier.nome,
+    cidades: [...unicas],
+    mensagens,
+  }
+}
+
+function mesclarPorCidade(resultados, uf) {
+  const byKey = new Map()
+
+  for (const resultado of resultados) {
+    const sigla = siglaComercial(resultado.sigla, uf)
+
+    for (const nome of resultado.cidades) {
+      const key = normalizeText(nome)
+      let entry = byKey.get(key)
+      if (!entry) {
+        entry = { nome, siglas: new Set() }
+        byKey.set(key, entry)
+      }
+      entry.siglas.add(sigla)
+    }
+  }
+
+  return [...byKey.values()]
+    .map((entry) => ({
+      nome: entry.nome,
+      siglas: ordenarSiglas(entry.siglas),
+    }))
+    .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
+}
+
+function cacheKey(uf) {
+  return `${CACHE_VERSION}:${uf}`
+}
+
 export async function listarCidadesPorUf(ufRaw) {
   const uf = normalizeUf(ufRaw)
   if (!/^[A-Z]{2}$/.test(uf)) {
@@ -136,63 +257,53 @@ export async function listarCidadesPorUf(ufRaw) {
       uf,
       total: 0,
       cidades: [],
-      mensagem: `A Jetlu não lista cobertura para ${uf} neste sistema.`,
+      mensagem: `Não há cobertura listada para ${uf} neste sistema.`,
     }
   }
 
-  const cached = cache.get(uf)
+  const key = cacheKey(uf)
+  const cached = cache.get(key)
   if (cached && Date.now() - cached.at < CACHE_TTL_MS) {
     return cached.data
   }
 
-  const dominio = getDominio()
+  const carriers = carriersParaCidades()
   const origens = getOrigens()
+  if (carriers.length === 0) {
+    throw new Error('Nenhuma transportadora (Jetlu/Lopesul) configurada para consultar cidades.')
+  }
   if (origens.length === 0) {
     throw new Error('Configure SSW_CIDADES_ORIGEM no .env, ex.: CASCAVEL / PR')
   }
 
-  const unicas = new Set()
-  const mensagens = []
+  const resultados = await Promise.all(carriers.map((carrier) => listarCidadesCarrier(carrier, uf, origens)))
+  const mescladas = mesclarPorCidade(resultados, uf)
+  const cidades = aplicarOverridesCidades(uf, mescladas)
+  const siglasPresentes = ordenarSiglas(new Set(cidades.flatMap((c) => c.siglas)))
+  const labels = siglasPresentes.join(' + ') || carriers.map((c) => c.sigla).join(' + ')
+  const falhas = resultados.filter((r) => r.cidades.length === 0 && r.mensagens.length > 0)
 
-  for (const origem of origens) {
-    const result = await consultarOrigem(dominio, origem, uf)
-    result.cidades.forEach((cidade) => unicas.add(cidade))
-    if (result.mensagem && result.cidades.length === 0) {
-      mensagens.push(result.mensagem)
-    }
-  }
-
-  const cidades = [...unicas].sort((a, b) => a.localeCompare(b, 'pt-BR'))
   const data = {
     sucesso: true,
     uf,
     total: cidades.length,
     cidades,
+    carriers: carriers.map((c) => ({ id: c.id, nome: c.nome, sigla: c.sigla })),
     mensagem: cidades.length
-      ? `${cidades.length} cidade(s) atendida(s) pela Jetlu em ${uf}`
-      : mensagens[0] || `Nenhuma cidade atendida em ${uf}`,
+      ? `${cidades.length} cidade(s) em ${uf} (${labels})`
+      : falhas[0]?.mensagens[0] || `Nenhuma cidade atendida em ${uf}`,
   }
 
-  cache.set(uf, { at: Date.now(), data })
+  cache.set(key, { at: Date.now(), data })
   return data
-}
-
-function normalizeText(value) {
-  return String(value ?? '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-zA-Z0-9\s]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .toUpperCase()
 }
 
 function filtrarCidades(query, cidades) {
   const termo = normalizeText(query)
   if (!termo || !Array.isArray(cidades)) return []
 
-  return cidades.filter((cidade) => {
-    const nome = normalizeText(cidade)
+  return cidades.filter((item) => {
+    const nome = normalizeText(item?.nome ?? item)
     return nome === termo || nome.startsWith(termo) || (termo.length >= 3 && nome.includes(termo))
   })
 }
@@ -208,8 +319,13 @@ export async function buscarCidadesPorNome(nomeRaw) {
   for (const uf of UFS_ATENDIDAS) {
     try {
       const data = await listarCidadesPorUf(uf)
-      for (const cidade of filtrarCidades(nome, data.cidades)) {
-        matches.push({ uf: data.uf, cidade })
+      for (const item of filtrarCidades(nome, data.cidades)) {
+        matches.push({
+          uf: data.uf,
+          cidade: item.nome,
+          nome: item.nome,
+          siglas: item.siglas,
+        })
       }
     } catch (error) {
       console.error(`Erro ao consultar cidades de ${uf}:`, error.message)
@@ -225,7 +341,10 @@ export async function buscarCidadesPorNome(nomeRaw) {
     sucesso: true,
     uf: '',
     total: matches.length,
-    cidades: matches.map((item) => `${item.cidade} / ${item.uf}`),
+    cidades: matches.map((item) => ({
+      nome: `${item.cidade} / ${item.uf}`,
+      siglas: item.siglas,
+    })),
     matches,
     mensagem: matches.length
       ? `${matches.length} cidade(s) atendida(s) encontrada(s)`

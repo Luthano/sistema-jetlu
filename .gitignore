@@ -26,3 +26,6 @@ Image/
 *.njsproj
 *.sln
 *.sw?
+
+# Relatorio local de revisao de cidades
+cidades-revisao-jl-ls.txt

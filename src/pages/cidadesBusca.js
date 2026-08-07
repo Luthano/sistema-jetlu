@@ -18,6 +18,17 @@ export function normalizeText(value) {
     .toUpperCase()
 }
 
+export function cityName(item) {
+  if (item == null) return ''
+  if (typeof item === 'string') return item
+  return String(item.nome || item.cidade || '')
+}
+
+export function citySiglas(item) {
+  if (!item || typeof item === 'string') return []
+  return Array.isArray(item.siglas) ? item.siglas : []
+}
+
 export function formatCityName(name) {
   return String(name)
     .toLocaleLowerCase('pt-BR')
@@ -28,15 +39,15 @@ export function matchCity(query, cidades) {
   const termo = normalizeText(query)
   if (!termo || !Array.isArray(cidades)) return null
 
-  const exact = cidades.find((cidade) => normalizeText(cidade) === termo)
+  const exact = cidades.find((cidade) => normalizeText(cityName(cidade)) === termo)
   if (exact) return exact
 
-  const starts = cidades.filter((cidade) => normalizeText(cidade).startsWith(termo))
+  const starts = cidades.filter((cidade) => normalizeText(cityName(cidade)).startsWith(termo))
   if (starts.length === 1) return starts[0]
 
   if (termo.length >= 3) {
     const contains = cidades.filter((cidade) => {
-      const nome = normalizeText(cidade)
+      const nome = normalizeText(cityName(cidade))
       return nome.includes(termo) && termo.length / nome.length >= 0.45
     })
     if (contains.length === 1) return contains[0]
