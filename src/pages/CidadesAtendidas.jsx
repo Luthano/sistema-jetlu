@@ -5,17 +5,13 @@ import Reveal from '../components/Reveal'
 import {
   buscarCidadesPorNome,
   buscarCidadesPorUf,
-  buscarEnderecoPorCep,
-  formatCep,
   formatCityName,
   matchCity,
-  onlyDigits,
 } from './cidadesBusca'
 import { UFS_ATENDIDAS } from '../lib/ufsAtendidas'
 import './CidadesAtendidas.css'
 
 function CidadesAtendidas() {
-  const [cep, setCep] = useState('')
   const [uf, setUf] = useState('')
   const [cidade, setCidade] = useState('')
   const [loading, setLoading] = useState(false)
@@ -41,36 +37,16 @@ function CidadesAtendidas() {
     return data
   }
 
-  async function preencherPorCep(valor) {
-    const digits = onlyDigits(valor)
-    if (digits.length !== 8) return
-
-    setErro('')
-    setLoading(true)
-    try {
-      const endereco = await buscarEnderecoPorCep(digits)
-      setUf(endereco.uf)
-      setCidade(endereco.cidade)
-      await carregarUf(endereco.uf)
-    } catch (error) {
-      setErro(error.message || 'Não foi possível localizar o CEP.')
-    } finally {
-      setLoading(false)
-    }
-  }
-
   async function pesquisar({
-    cepValor = cep,
     ufValor = uf,
     cidadeValor = cidade,
     mostrarLoading = true,
   } = {}) {
-    const temCep = onlyDigits(cepValor).length === 8
     const ufInformada = ufValor
     const cidadeInformada = String(cidadeValor || '').trim()
 
-    if (!temCep && !ufInformada && !cidadeInformada) {
-      setErro('Informe o CEP, a UF ou a cidade.')
+    if (!ufInformada && !cidadeInformada) {
+      setErro('Informe a UF ou a cidade.')
       return
     }
 
@@ -78,38 +54,27 @@ function CidadesAtendidas() {
     if (mostrarLoading) setLoading(true)
 
     try {
-      let ufAtual = ufInformada
-      let cidadeAtual = cidadeInformada
-
-      if (temCep) {
-        const endereco = await buscarEnderecoPorCep(cepValor)
-        ufAtual = endereco.uf
-        cidadeAtual = endereco.cidade
-        setUf(ufAtual)
-        setCidade(cidadeAtual)
-      }
-
-      if (ufAtual) {
-        const data = await carregarUf(ufAtual)
+      if (ufInformada) {
+        const data = await carregarUf(ufInformada)
         setResultado(data)
 
-        if (cidadeAtual) {
-          const encontrada = matchCity(cidadeAtual, data.cidades)
+        if (cidadeInformada) {
+          const encontrada = matchCity(cidadeInformada, data.cidades)
           setConsulta({
-            uf: ufAtual,
-            cidade: encontrada || cidadeAtual,
+            uf: ufInformada,
+            cidade: encontrada || cidadeInformada,
             atendida: Boolean(encontrada),
           })
         } else {
           setConsulta(null)
         }
       } else {
-        const data = await buscarCidadesPorNome(cidadeAtual)
+        const data = await buscarCidadesPorNome(cidadeInformada)
         const ufs = [...new Set((data.matches || []).map((item) => item.uf))]
         setResultado(data)
         setConsulta({
           uf: ufs.join(', '),
-          cidade: cidadeAtual,
+          cidade: cidadeInformada,
           atendida: data.total > 0,
         })
       }
@@ -139,12 +104,10 @@ function CidadesAtendidas() {
       return
     }
 
-    setCep('')
     setCidade('')
     setUf(proximaUf)
     setConsulta(null)
     await pesquisar({
-      cepValor: '',
       ufValor: proximaUf,
       cidadeValor: '',
       mostrarLoading: false,
@@ -160,16 +123,6 @@ function CidadesAtendidas() {
               <h1>A logística acelerada que faz acontecer.</h1>
               <p className="cidades-map-label">Consulte as cidades atendidas:</p>
               <form className="cidades-map-search" onSubmit={handlePesquisar}>
-                <label>
-                  <span>CEP</span>
-                  <input
-                    value={cep}
-                    onChange={(e) => setCep(formatCep(e.target.value))}
-                    onBlur={(e) => preencherPorCep(e.target.value)}
-                    placeholder="00000-000"
-                    inputMode="numeric"
-                  />
-                </label>
                 <label>
                   <span>UF</span>
                   <select

@@ -59,7 +59,7 @@
 
 .cidades-map-search {
   display: grid;
-  grid-template-columns: 120px 88px minmax(140px, 1fr) auto;
+  grid-template-columns: 88px minmax(160px, 220px) auto;
   gap: 12px;
   align-items: end;
   margin-bottom: 10px;
@@ -96,14 +96,16 @@
   align-items: center;
   justify-content: center;
   align-self: end;
-  padding: 11px 18px;
+  padding: 10px 14px;
   border-radius: 999px;
   border: none;
   background: var(--jetlu-red);
   color: #fff;
   font-weight: 700;
-  font-size: 0.92rem;
-  box-shadow: 0 10px 24px rgba(248, 0, 22, 0.35);
+  font-size: 0.84rem;
+  line-height: 1.2;
+  white-space: nowrap;
+  box-shadow: 0 8px 18px rgba(248, 0, 22, 0.28);
   cursor: pointer;
 }
 

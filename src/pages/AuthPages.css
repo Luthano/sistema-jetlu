@@ -1,6 +1,6 @@
 .auth-page {
-  min-height: calc(100dvh - 72px);
-  padding: 40px 16px 72px;
+  flex: 1;
+  padding: 40px 16px 48px;
   background: #f4f6fa;
 }
 

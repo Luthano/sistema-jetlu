@@ -62,6 +62,10 @@ function Home() {
         <div className="landing-hero-content">
           <img className="landing-hero-logo" src="/home/logo-jetlu.svg" alt="Jetlu" />
           <h1>Logística acelerada, que faz acontecer.</h1>
+          <p className="landing-hero-lead">
+            Se sua empresa exige mais da logística — mais agilidade, mais controle, mais visão —
+            a Jetlu entrega.
+          </p>
           <div className="landing-hero-actions">
             <Link to="/cotacao" className="landing-cta">
               Fazer cotação
@@ -76,7 +80,7 @@ function Home() {
       <section className="landing-section landing-pillars">
         <div className="landing-wrap landing-pillars-grid">
           {PILARES.map((item, index) => (
-            <Reveal key={item.title} delay={index * 80} as="article" className="landing-pillar">
+            <Reveal key={item.title} delay={index * 70} as="article" className="landing-pillar">
               <img src={item.icon} alt="" />
               <h3>{item.title}</h3>
               <p>{item.text}</p>
@@ -97,7 +101,7 @@ function Home() {
             </Reveal>
             <div className="landing-diff-cards">
               {DIFERENCIAIS.map((item, index) => (
-                <Reveal key={item.text} delay={index * 60} as="article" className="landing-diff-card">
+                <Reveal key={item.text} delay={index * 50} as="article" className="landing-diff-card">
                   <img className="landing-diff-icon" src={item.icon} alt="" />
                   <p>{item.text}</p>
                 </Reveal>
@@ -116,7 +120,7 @@ function Home() {
           </Reveal>
           <div className="landing-cards">
             {SOLUCOES.map((item, index) => (
-              <Reveal key={item.title} delay={index * 90} as="article" className="landing-card">
+              <Reveal key={item.title} delay={index * 80} as="article" className="landing-card">
                 <img src={item.image} alt="" />
                 <div className="landing-card-body">
                   <p>{item.subtitle}</p>
@@ -143,8 +147,16 @@ function Home() {
             <p className="landing-about-highlight">
               Logística que pensa como empresa, não só como transportadora.
             </p>
+            <div className="landing-about-actions">
+              <Link to="/cidades-atendidas" className="landing-cta landing-cta-navy">
+                Ver cidades atendidas
+              </Link>
+              <Link to="/cotacao" className="landing-cta">
+                Calcular frete
+              </Link>
+            </div>
           </Reveal>
-          <Reveal delay={120} className="landing-about-visual">
+          <Reveal delay={100} className="landing-about-visual">
             <img src="/home/banner-sobre.png" alt="Operação Jetlu" />
           </Reveal>
         </div>
@@ -172,8 +184,8 @@ function Home() {
             <h2>Lucre com a Jetlu</h2>
           </Reveal>
           <div className="landing-join-grid">
-            <Reveal
-              as="article"
+            <a
+              href="mailto:comercial@jetlu.com.br?subject=Quero%20ser%20franqueado%20Jetlu"
               className="landing-join-card landing-join-featured"
               style={{ backgroundImage: 'url(/home/banner-franqueado.png)' }}
             >
@@ -182,11 +194,10 @@ function Home() {
                 <p>Abra sua unidade Jetlu e tenha um negócio escalável com alta demanda.</p>
                 <span className="landing-join-btn">Quero ser um franqueado</span>
               </div>
-            </Reveal>
-            <Reveal
-              as="article"
+            </a>
+            <a
+              href="mailto:operacional@jetlu.com.br?subject=Cadastro%20de%20veiculo%20parceiro"
               className="landing-join-card landing-join-photo"
-              delay={80}
               style={{ backgroundImage: 'url(/home/banner-site-7.png)' }}
             >
               <div>
@@ -194,38 +205,29 @@ function Home() {
                 <p>Transforme seu veículo em uma fonte de faturamento, sendo parceiro da Jetlu.</p>
                 <span className="landing-join-btn">Cadastrar veículo</span>
               </div>
-            </Reveal>
-            <Reveal as="article" className="landing-join-card" delay={140}>
+            </a>
+            <a
+              href="mailto:comercial@jetlu.com.br?subject=Curriculo%20-%20Trabalhe%20na%20Jetlu"
+              className="landing-join-card"
+            >
               <img className="landing-join-mini-icon" src="/home/foguete.svg" alt="" />
               <h3>Trabalhe conosco</h3>
               <p>Faça parte de uma empresa inovadora e em crescimento no setor logístico.</p>
               <span className="landing-join-btn ghost">Enviar currículo</span>
-            </Reveal>
+            </a>
           </div>
         </div>
       </section>
 
-      <Reveal as="section" className="landing-banner-cta">
-        <img className="landing-banner-cta-bg" src="/home/banner-blog.png" alt="" />
+      <section className="landing-banner-cta">
+        <img className="landing-banner-cta-bg" src="/home/banner-blog.png" alt="" aria-hidden="true" />
         <div className="landing-wrap landing-banner-cta-inner">
-          <h2>Pronto para acelerar sua logística?</h2>
+          <h2>A logística acelerada que faz acontecer.</h2>
           <Link to="/cotacao" className="landing-cta">
             Fazer cotação
           </Link>
         </div>
-      </Reveal>
-
-      <footer className="landing-footer">
-        <div className="landing-wrap landing-footer-inner">
-          <img src="/home/logo-jetlu.svg" alt="Jetlu" />
-          <p>A logística acelerada que faz acontecer.</p>
-          <div className="landing-footer-links">
-            <Link to="/cidades-atendidas">Cidades atendidas</Link>
-            <Link to="/rastrear">Rastrear encomenda</Link>
-            <Link to="/cotacao">Ir para cotação</Link>
-          </div>
-        </div>
-      </footer>
+      </section>
     </div>
   )
 }

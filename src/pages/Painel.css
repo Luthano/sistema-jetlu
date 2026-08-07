@@ -9,7 +9,8 @@
 
   display: grid;
   grid-template-columns: var(--painel-side) minmax(0, 1fr);
-  min-height: calc(100dvh - 72px);
+  flex: 1;
+  min-height: 0;
   background: #f8fafc;
 }
 

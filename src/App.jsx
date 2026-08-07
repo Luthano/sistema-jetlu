@@ -8,6 +8,7 @@ import CidadesAtendidas from './pages/CidadesAtendidas'
 import Login from './pages/Login'
 import Historico from './pages/Historico'
 import Painel from './pages/Painel'
+import SiteFooter from './components/SiteFooter'
 import './App.css'
 
 const TABS = [
@@ -149,6 +150,7 @@ function AppShell() {
           <Route path="/historico" element={<Historico />} />
         </Routes>
       </main>
+      <SiteFooter />
     </div>
   )
 }

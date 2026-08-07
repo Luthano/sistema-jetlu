@@ -28,7 +28,7 @@
 }
 
 .app-brand-logo {
-  height: 36px;
+  height: 47px;
   width: auto;
   display: block;
 }
@@ -93,12 +93,15 @@
 
 .app-main {
   flex: 1;
+  display: flex;
+  flex-direction: column;
   width: 100%;
+  min-height: 0;
 }
 
 .page-shell {
-  min-height: calc(100dvh - 72px);
-  padding: 40px 16px 72px;
+  flex: 1;
+  padding: 40px 16px 48px;
   background: #f4f6fa;
 }
 
@@ -230,7 +233,7 @@
 
 @media (max-width: 640px) {
   .app-brand-logo {
-    height: 30px;
+    height: 39px;
   }
 
   .menu-mobile {

@@ -461,12 +461,6 @@ function Cotacao() {
                 <span>Valor NF</span>
                 <strong>{form.valorNF ? formatMoney(form.valorNF) : '—'}</strong>
               </li>
-              {transportadoras.length > 0 && (
-                <li>
-                  <span>Consulta automática</span>
-                  <strong>{transportadoras.map((t) => t.nome).join(' + ')}</strong>
-                </li>
-              )}
             </ul>
             <button type="submit" className="btn-primary" disabled={loading}>
               {loading ? 'Consultando rotas…' : 'Calcular frete'}

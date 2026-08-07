@@ -1,6 +1,6 @@
 .reveal {
   opacity: 0;
-  transform: translateY(18px);
+  transform: translateY(16px);
   transition:
     opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1),
     transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
@@ -38,58 +38,17 @@
   animation-delay: 0.32s;
 }
 
-.landing-cta-outline:hover:not(:disabled) {
+.landing-cta-outline:hover {
   background: rgba(255, 255, 255, 0.12);
   border-color: #fff;
 }
 
 .landing-cta:focus-visible,
 .landing-join-btn:focus-visible,
-.app-brand:focus-visible,
-.landing-footer a:focus-visible {
+.landing-join-card:focus-visible,
+.app-brand:focus-visible {
   outline: 3px solid #ffb3ba;
   outline-offset: 3px;
-}
-
-.landing-cta,
-.landing-join-btn,
-.landing-footer a,
-.app-brand-logo {
-  transition:
-    transform 0.2s ease,
-    filter 0.2s ease,
-    box-shadow 0.2s ease,
-    background-color 0.2s ease,
-    color 0.2s ease,
-    border-color 0.2s ease;
-}
-
-.landing-cta:hover:not(:disabled),
-.landing-join-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 26px rgba(248, 0, 22, 0.28);
-}
-
-.landing-cta:active:not(:disabled),
-.landing-join-btn:active {
-  transform: translateY(0);
-}
-
-.landing-card,
-.landing-join-card,
-.landing-partner-logos img,
-.landing-diff-visual,
-.landing-about-visual,
-.landing-pillar {
-  transition:
-    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 0.35s ease;
-}
-
-.landing-card:hover,
-.landing-join-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 18px 40px rgba(6, 40, 85, 0.16);
 }
 
 .landing-card img {
@@ -100,23 +59,21 @@
   transform: scale(1.05);
 }
 
-.landing-partner-logos img:hover {
-  transform: translateY(-3px);
-}
-
 .landing-diff-card {
-  transition:
-    transform 0.25s ease,
-    background-color 0.25s ease,
-    border-color 0.25s ease,
-    box-shadow 0.25s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .landing-diff-card:hover {
-  transform: translateY(-3px);
   background: rgba(255, 255, 255, 0.14);
   border-color: rgba(255, 255, 255, 0.24);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+}
+
+.landing-partner-logos img {
+  transition: transform 0.25s ease;
+}
+
+.landing-partner-logos img:hover {
+  transform: translateY(-2px);
 }
 
 .app-header {
@@ -125,10 +82,6 @@
 
 .app-header.is-scrolled {
   box-shadow: 0 8px 24px rgba(4, 26, 54, 0.28);
-}
-
-.app-brand-logo:hover {
-  transform: scale(1.03);
 }
 
 @keyframes hero-kenburns {
@@ -143,7 +96,7 @@
 @keyframes landing-rise {
   from {
     opacity: 0;
-    transform: translateY(16px);
+    transform: translateY(14px);
   }
   to {
     opacity: 1;
@@ -156,18 +109,14 @@
   .landing-hero-bg,
   .landing-hero-content > *,
   .landing-cta,
-  .landing-join-btn,
-  .landing-card,
   .landing-join-card,
   .landing-card img,
   .landing-partner-logos img,
   .landing-diff-card,
-  .app-header,
-  .app-brand-logo {
+  .app-header {
     animation: none !important;
     transition: none !important;
     transform: none !important;
     opacity: 1 !important;
-    filter: none !important;
   }
 }

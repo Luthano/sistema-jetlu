@@ -1,6 +1,6 @@
 import { useReveal } from '../hooks/useReveal'
 
-function Reveal({ children, className = '', delay = 0, as: Tag = 'div', style }) {
+function Reveal({ children, className = '', delay = 0, as: Tag = 'div', style, ...rest }) {
   const { ref, visible } = useReveal()
 
   return (
@@ -11,6 +11,7 @@ function Reveal({ children, className = '', delay = 0, as: Tag = 'div', style })
         ...(delay ? { '--reveal-delay': `${delay}ms` } : {}),
         ...style,
       }}
+      {...rest}
     >
       {children}
     </Tag>
