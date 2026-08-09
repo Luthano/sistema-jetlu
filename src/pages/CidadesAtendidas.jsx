@@ -1,10 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import MapaBrasil from '../components/MapaBrasil'
 import Reveal from '../components/Reveal'
 import {
-  buscarCidadesPorNome,
   buscarCidadesPorUf,
+  buscarUfsCobertura,
   cityName,
   citySiglas,
   formatCityName,
@@ -13,7 +13,6 @@ import {
 import { UFS_ATENDIDAS } from '../lib/ufsAtendidas'
 import './CidadesAtendidas.css'
 
-/** Cache local só vale se a resposta já for multi-carrier (com carriers + siglas). */
 function cacheUfValido(data) {
   if (!data || !Array.isArray(data.cidades) || !Array.isArray(data.carriers)) return false
   if (data.cidades.length === 0) return true
@@ -21,16 +20,26 @@ function cacheUfValido(data) {
   return Boolean(first && typeof first === 'object' && Array.isArray(first.siglas))
 }
 
+function intersecaoSiglas(a = [], b = []) {
+  const setB = new Set(b)
+  return a.filter((sigla) => setB.has(sigla))
+}
+
+const ORDEM_COLETA_REDESPACHO = ['ER', 'LS', 'JL']
+
+function nomePorSigla(sigla) {
+  if (sigla === 'JL') return 'Jetlu'
+  if (sigla === 'LS') return 'Lopesul'
+  if (sigla === 'ER') return 'Envia Rápido'
+  return sigla
+}
+
 function SiglasBadges({ siglas }) {
   if (!siglas?.length) return null
   return (
     <span className="cidades-siglas" aria-label={`Atendida por ${siglas.join(' e ')}`}>
       {siglas.map((sigla) => (
-        <span
-          key={sigla}
-          className={`cidades-sigla is-${sigla.toLowerCase()}`}
-          title={sigla === 'JL' ? 'Jetlu' : sigla === 'LS' ? 'Lopesul' : sigla}
-        >
+        <span key={sigla} className={`cidades-sigla is-${sigla.toLowerCase()}`} title={nomePorSigla(sigla)}>
           {sigla}
         </span>
       ))}
@@ -38,43 +47,93 @@ function SiglasBadges({ siglas }) {
   )
 }
 
+/** Coleta em uma transportadora e entrega em outra (redespacho). */
+function montarRedespacho(siglasOrigem = [], siglasDestino = []) {
+  const destPrefer = siglasDestino.includes('JL') ? 'JL' : siglasDestino[0] || ''
+  if (!destPrefer) return null
+
+  const candidatas = siglasOrigem.filter((sigla) => sigla !== destPrefer)
+  if (!candidatas.length) return null
+
+  candidatas.sort((a, b) => {
+    const ia = ORDEM_COLETA_REDESPACHO.indexOf(a)
+    const ib = ORDEM_COLETA_REDESPACHO.indexOf(b)
+    return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib)
+  })
+
+  return {
+    coleta: candidatas[0],
+    entrega: destPrefer,
+  }
+}
+
 function CidadesAtendidas() {
-  const [uf, setUf] = useState('')
-  const [cidade, setCidade] = useState('')
+  const [ufOrigem, setUfOrigem] = useState('')
+  const [cidadeOrigem, setCidadeOrigem] = useState('')
+  const [ufDestino, setUfDestino] = useState('')
+  const [cidadeDestino, setCidadeDestino] = useState('')
   const [loading, setLoading] = useState(false)
+  const [loadingLista, setLoadingLista] = useState(false)
   const [erro, setErro] = useState('')
-  const [resultado, setResultado] = useState(null)
   const [consulta, setConsulta] = useState(null)
   const [cacheUf, setCacheUf] = useState({})
+  const [ufsDisponiveis, setUfsDisponiveis] = useState(UFS_ATENDIDAS)
+  const [mapaFoco, setMapaFoco] = useState('destino')
 
-  const sugestoes = cacheUf[uf]?.cidades || resultado?.cidades || []
+  useEffect(() => {
+    let cancelled = false
+    buscarUfsCobertura()
+      .then((ufs) => {
+        if (!cancelled && ufs.length) setUfsDisponiveis(ufs)
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const sugestoesOrigem = cacheUf[ufOrigem]?.cidades || []
+  const sugestoesDestino = cacheUf[ufDestino]?.cidades || []
+
+  const ufLista = mapaFoco === 'origem' ? ufOrigem : ufDestino
+  const cidadeListaFiltro = mapaFoco === 'origem' ? cidadeOrigem : cidadeDestino
+  const cidadesDaUf = cacheUf[ufLista]?.cidades || []
+  const carregandoLista = Boolean(ufLista && !cacheUfValido(cacheUf[ufLista]) && loadingLista)
+
   const cidadesFiltradas = useMemo(() => {
-    const lista = resultado?.cidades || []
-    const termo = cidade.trim().toLocaleLowerCase('pt-BR')
-    if (!termo) return lista
-    return lista.filter((item) => cityName(item).toLocaleLowerCase('pt-BR').includes(termo))
-  }, [resultado, cidade])
+    const termo = String(cidadeListaFiltro || '').trim().toLocaleLowerCase('pt-BR')
+    if (!termo) return cidadesDaUf
+    return cidadesDaUf.filter((item) => cityName(item).toLocaleLowerCase('pt-BR').includes(termo))
+  }, [cidadesDaUf, cidadeListaFiltro])
 
-  async function carregarUf(proximaUf, { forcar = false } = {}) {
+  const ufsSelect = useMemo(() => {
+    const base = ufsDisponiveis.length ? ufsDisponiveis : UFS_ATENDIDAS
+    return base
+  }, [ufsDisponiveis])
+
+  async function carregarUf(proximaUf, { comLoadingLista = false } = {}) {
     if (!proximaUf) return null
     const cached = cacheUf[proximaUf]
-    if (!forcar && cacheUfValido(cached)) return cached
+    if (cacheUfValido(cached)) return cached
 
-    const data = await buscarCidadesPorUf(proximaUf)
-    setCacheUf((prev) => ({ ...prev, [proximaUf]: data }))
-    return data
+    if (comLoadingLista) setLoadingLista(true)
+    try {
+      const data = await buscarCidadesPorUf(proximaUf)
+      setCacheUf((prev) => ({ ...prev, [proximaUf]: data }))
+      return data
+    } finally {
+      if (comLoadingLista) setLoadingLista(false)
+    }
   }
 
-  async function pesquisar({
-    ufValor = uf,
-    cidadeValor = cidade,
-    mostrarLoading = true,
-  } = {}) {
-    const ufInformada = ufValor
-    const cidadeInformada = String(cidadeValor || '').trim()
+  async function pesquisar({ mostrarLoading = true } = {}) {
+    const origemUf = ufOrigem
+    const destinoUf = ufDestino
+    const origemNome = String(cidadeOrigem || '').trim()
+    const destinoNome = String(cidadeDestino || '').trim()
 
-    if (!ufInformada && !cidadeInformada) {
-      setErro('Informe a UF ou a cidade.')
+    if (!origemUf || !origemNome || !destinoUf || !destinoNome) {
+      setErro('Informe UF e cidade de saída e de destino.')
       return
     }
 
@@ -82,41 +141,44 @@ function CidadesAtendidas() {
     if (mostrarLoading) setLoading(true)
 
     try {
-      if (ufInformada) {
-        const data = await carregarUf(ufInformada)
-        setResultado(data)
+      const [dataOrigem, dataDestino] = await Promise.all([
+        carregarUf(origemUf),
+        carregarUf(destinoUf),
+      ])
 
-        if (cidadeInformada) {
-          const encontrada = matchCity(cidadeInformada, data.cidades)
-          setConsulta({
-            uf: ufInformada,
-            cidade: encontrada ? cityName(encontrada) : cidadeInformada,
-            siglas: encontrada ? citySiglas(encontrada) : [],
-            atendida: Boolean(encontrada),
-          })
-        } else {
-          setConsulta(null)
-        }
-      } else {
-        const data = await buscarCidadesPorNome(cidadeInformada)
-        const ufs = [...new Set((data.matches || []).map((item) => item.uf))]
-        const siglas = [
-          ...new Set((data.matches || []).flatMap((item) => item.siglas || [])),
-        ]
-        setResultado(data)
-        setConsulta({
-          uf: ufs.join(', '),
-          cidade: cidadeInformada,
-          siglas,
-          atendida: data.total > 0,
-        })
+      const origemMatch = matchCity(origemNome, dataOrigem?.cidades || [])
+      const destinoMatch = matchCity(destinoNome, dataDestino?.cidades || [])
+
+      const siglasOrigem = origemMatch ? citySiglas(origemMatch) : []
+      const siglasDestino = destinoMatch ? citySiglas(destinoMatch) : []
+      const siglasDiretas = intersecaoSiglas(siglasOrigem, siglasDestino)
+
+      let tipo = 'nao'
+      if (origemMatch && destinoMatch && siglasDiretas.length) {
+        tipo = 'direta'
+      } else if (origemMatch && destinoMatch && montarRedespacho(siglasOrigem, siglasDestino)) {
+        tipo = 'redespacho'
       }
+
+      setConsulta({
+        tipo,
+        atendida: tipo !== 'nao',
+        origem: {
+          uf: origemUf,
+          cidade: origemMatch ? cityName(origemMatch) : origemNome,
+          encontrada: Boolean(origemMatch),
+        },
+        destino: {
+          uf: destinoUf,
+          cidade: destinoMatch ? cityName(destinoMatch) : destinoNome,
+          encontrada: Boolean(destinoMatch),
+        },
+      })
 
       requestAnimationFrame(() => {
         document.getElementById('cidades-resultado')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
       })
     } catch (error) {
-      setResultado(null)
       setConsulta(null)
       setErro(error.message || 'Erro de comunicação com a API.')
     } finally {
@@ -130,27 +192,48 @@ function CidadesAtendidas() {
   }
 
   async function handleMapaUf(proximaUf) {
-    if (!UFS_ATENDIDAS.includes(proximaUf)) {
-      setErro(`A UF ${proximaUf} não está no filtro de cidades atendidas.`)
-      setResultado(null)
-      setConsulta(null)
-      return
+    setErro('')
+    setConsulta(null)
+
+    if (mapaFoco === 'origem') {
+      setUfOrigem(proximaUf)
+      setCidadeOrigem('')
+    } else {
+      setUfDestino(proximaUf)
+      setCidadeDestino('')
     }
 
-    setCidade('')
-    setUf(proximaUf)
-    setConsulta(null)
-    setCacheUf((prev) => {
-      const next = { ...prev }
-      delete next[proximaUf]
-      return next
-    })
-    await pesquisar({
-      ufValor: proximaUf,
-      cidadeValor: '',
-      mostrarLoading: false,
-    })
+    try {
+      await carregarUf(proximaUf, { comLoadingLista: true })
+      requestAnimationFrame(() => {
+        document.getElementById('cidades-lista-uf')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      })
+    } catch (error) {
+      setErro(error.message || 'Não foi possível carregar as cidades da UF.')
+    }
   }
+
+  function escolherCidadeLista(nome) {
+    const formatado = formatCityName(nome)
+    if (mapaFoco === 'origem') setCidadeOrigem(formatado)
+    else setCidadeDestino(formatado)
+  }
+
+  const selectedMapUf = mapaFoco === 'origem' ? ufOrigem : ufDestino
+
+  const statusClass =
+    consulta?.tipo === 'direta'
+      ? 'is-ok'
+      : consulta?.tipo === 'redespacho'
+        ? 'is-redespacho'
+        : 'is-no'
+
+  const statusTitulo =
+    consulta?.tipo === 'direta'
+      ? 'Rota atendida'
+      : consulta?.tipo === 'redespacho'
+        ? 'Rota com redespacho'
+        : 'Rota não atendida'
 
   return (
     <div className="page-shell">
@@ -159,108 +242,191 @@ function CidadesAtendidas() {
           <div className="cidades-wrap cidades-map-grid">
             <Reveal className="cidades-map-copy">
               <h1>A logística acelerada que faz acontecer.</h1>
-              <p className="cidades-map-label">Consulte as cidades atendidas:</p>
-              <form className="cidades-map-search" onSubmit={handlePesquisar}>
-                <label>
-                  <span>UF</span>
-                  <select
-                    value={uf}
-                    onChange={(e) => {
-                      setUf(e.target.value)
-                      setConsulta(null)
-                      if (e.target.value) carregarUf(e.target.value).catch(() => {})
-                    }}
-                  >
-                    <option value="">UF</option>
-                    {UFS_ATENDIDAS.map((item) => (
-                      <option key={item} value={item}>
-                        {item}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="cidades-field-wide">
-                  <span>Cidade</span>
-                  <input
-                    value={cidade}
-                    onChange={(e) => setCidade(e.target.value)}
-                    placeholder="Nome da cidade"
-                    list="cidades-sugestoes"
-                  />
-                  <datalist id="cidades-sugestoes">
-                    {sugestoes.slice(0, 40).map((item) => {
-                      const nome = cityName(item)
-                      return <option key={nome} value={formatCityName(nome)} />
-                    })}
-                  </datalist>
-                </label>
+              <p className="cidades-map-label">Consulte a rota atendida:</p>
+              <form className="cidades-map-search cidades-map-search-rota" onSubmit={handlePesquisar}>
+                <fieldset className="cidades-rota-group">
+                  <legend>Saída</legend>
+                  <div className="cidades-rota-fields">
+                    <label>
+                      <span>UF</span>
+                      <select
+                        value={ufOrigem}
+                        onFocus={() => setMapaFoco('origem')}
+                        onChange={(e) => {
+                          setUfOrigem(e.target.value)
+                          setConsulta(null)
+                          setMapaFoco('origem')
+                          if (e.target.value) carregarUf(e.target.value, { comLoadingLista: true }).catch(() => {})
+                        }}
+                      >
+                        <option value="">UF</option>
+                        {ufsSelect.map((item) => (
+                          <option key={`o-${item}`} value={item}>
+                            {item}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="cidades-field-wide">
+                      <span>Cidade de saída</span>
+                      <input
+                        value={cidadeOrigem}
+                        onFocus={() => setMapaFoco('origem')}
+                        onChange={(e) => setCidadeOrigem(e.target.value)}
+                        placeholder="Cidade de origem"
+                        list="cidades-sugestoes-origem"
+                      />
+                      <datalist id="cidades-sugestoes-origem">
+                        {sugestoesOrigem.slice(0, 40).map((item) => {
+                          const nome = cityName(item)
+                          return <option key={`o-${nome}`} value={formatCityName(nome)} />
+                        })}
+                      </datalist>
+                    </label>
+                  </div>
+                </fieldset>
+
+                <fieldset className="cidades-rota-group">
+                  <legend>Destino</legend>
+                  <div className="cidades-rota-fields">
+                    <label>
+                      <span>UF</span>
+                      <select
+                        value={ufDestino}
+                        onFocus={() => setMapaFoco('destino')}
+                        onChange={(e) => {
+                          setUfDestino(e.target.value)
+                          setConsulta(null)
+                          setMapaFoco('destino')
+                          if (e.target.value) carregarUf(e.target.value, { comLoadingLista: true }).catch(() => {})
+                        }}
+                      >
+                        <option value="">UF</option>
+                        {ufsSelect.map((item) => (
+                          <option key={`d-${item}`} value={item}>
+                            {item}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="cidades-field-wide">
+                      <span>Cidade de destino</span>
+                      <input
+                        value={cidadeDestino}
+                        onFocus={() => setMapaFoco('destino')}
+                        onChange={(e) => setCidadeDestino(e.target.value)}
+                        placeholder="Cidade de destino"
+                        list="cidades-sugestoes-destino"
+                      />
+                      <datalist id="cidades-sugestoes-destino">
+                        {sugestoesDestino.slice(0, 40).map((item) => {
+                          const nome = cityName(item)
+                          return <option key={`d-${nome}`} value={formatCityName(nome)} />
+                        })}
+                      </datalist>
+                    </label>
+                  </div>
+                </fieldset>
+
                 <button type="submit" className="cidades-cta" disabled={loading}>
                   {loading ? 'Pesquisando…' : 'Pesquisar'}
                 </button>
               </form>
+              <p className="cidades-map-note">
+                Clique no mapa para preencher a UF de {mapaFoco === 'origem' ? 'saída' : 'destino'}.
+              </p>
               {erro && (
                 <p className="cidades-map-erro" role="alert">
                   {erro}
                 </p>
               )}
             </Reveal>
-            <MapaBrasil onSelectUf={handleMapaUf} selectedUf={uf} />
+            <MapaBrasil onSelectUf={handleMapaUf} selectedUf={selectedMapUf} />
           </div>
         </section>
 
-        {(consulta || resultado) && (
+        {(consulta || ufLista) && (
           <section className="cidades-wrap cidades-resultado" id="cidades-resultado">
             {consulta && (
-              <div className={`cidades-status ${consulta.atendida ? 'is-ok' : 'is-no'}`}>
-                <strong>{consulta.atendida ? 'Cidade atendida' : 'Cidade não atendida'}</strong>
+              <div className={`cidades-status ${statusClass}`}>
+                <strong>{statusTitulo}</strong>
                 <p>
-                  {formatCityName(consulta.cidade)}
-                  {consulta.uf ? ` / ${consulta.uf}` : ''}
+                  {formatCityName(consulta.origem.cidade)} / {consulta.origem.uf}
+                  {' → '}
+                  {formatCityName(consulta.destino.cidade)} / {consulta.destino.uf}
                 </p>
-                {consulta.atendida && <SiglasBadges siglas={consulta.siglas} />}
+
+                {consulta.tipo === 'direta' && (
+                  <p className="cidades-map-note">Rota direta com a mesma transportadora.</p>
+                )}
+
+                {consulta.tipo === 'nao' && (
+                  <p className="cidades-map-note">
+                    {!consulta.origem.encontrada && !consulta.destino.encontrada
+                      ? 'Saída e destino não encontrados na cobertura cadastrada.'
+                      : !consulta.origem.encontrada
+                        ? 'Cidade de saída não encontrada na cobertura.'
+                        : !consulta.destino.encontrada
+                          ? 'Cidade de destino não encontrada na cobertura.'
+                          : 'Não foi possível montar rota direta nem redespacho com a cobertura cadastrada.'}
+                  </p>
+                )}
+
                 {consulta.atendida ? (
                   <Link to="/cotacao" className="cidades-cta cidades-cta-inline">
                     Fazer cotação
                   </Link>
-                ) : (
-                  <p className="cidades-map-note">Confira o nome da cidade ou fale com o atendimento Jetlu.</p>
-                )}
+                ) : null}
               </div>
             )}
 
-            {resultado && (
-              <>
+            {ufLista && (
+              <div id="cidades-lista-uf">
                 <div className="cidades-resultado-head">
                   <div>
-                    <p className="cidades-map-label">{resultado.uf ? 'Cidades da UF' : 'Resultado da consulta'}</p>
+                    <p className="cidades-map-label">
+                      Cidades de {mapaFoco === 'origem' ? 'saída' : 'destino'}
+                    </p>
                     <h2>
-                      {resultado.uf
-                        ? `${resultado.total} cidade${resultado.total === 1 ? '' : 's'} em ${resultado.uf}`
-                        : `${resultado.total} cidade${resultado.total === 1 ? '' : 's'} encontrada${resultado.total === 1 ? '' : 's'}`}
+                      {carregandoLista
+                        ? `Carregando cidades em ${ufLista}…`
+                        : `${cidadesDaUf.length} cidade${cidadesDaUf.length === 1 ? '' : 's'} em ${ufLista}`}
                     </h2>
                   </div>
                 </div>
 
-                {cidadesFiltradas.length === 0 ? (
-                  <p className="cidades-map-note">Nenhuma cidade encontrada com esse filtro.</p>
+                {carregandoLista ? (
+                  <p className="cidades-map-note">Buscando cobertura cadastrada…</p>
+                ) : cidadesFiltradas.length === 0 ? (
+                  <p className="cidades-map-note">
+                    {cidadesDaUf.length === 0
+                      ? 'Nenhuma cidade cadastrada para esta UF.'
+                      : 'Nenhuma cidade encontrada com esse filtro.'}
+                  </p>
                 ) : (
                   <ul className="cidades-lista">
                     {cidadesFiltradas.map((item) => {
                       const nome = cityName(item)
                       const siglas = citySiglas(item)
-                      const isMatch =
-                        consulta?.atendida &&
-                        Boolean(matchCity(consulta.cidade, [{ nome, siglas }]))
+                      const selecionada =
+                        String(cidadeListaFiltro || '').trim().toLocaleLowerCase('pt-BR') ===
+                        nome.toLocaleLowerCase('pt-BR')
                       return (
-                        <li key={`${nome}-${siglas.join('-')}`} className={isMatch ? 'is-match' : ''}>
-                          <span className="cidades-lista-nome">{formatCityName(nome)}</span>
-                          <SiglasBadges siglas={siglas} />
+                        <li key={`${ufLista}-${nome}-${siglas.join('-')}`} className={selecionada ? 'is-match' : ''}>
+                          <button
+                            type="button"
+                            className="cidades-lista-btn"
+                            onClick={() => escolherCidadeLista(nome)}
+                          >
+                            <span className="cidades-lista-nome">{formatCityName(nome)}</span>
+                            <SiglasBadges siglas={siglas} />
+                          </button>
                         </li>
                       )
                     })}
                   </ul>
                 )}
-              </>
+              </div>
             )}
           </section>
         )}

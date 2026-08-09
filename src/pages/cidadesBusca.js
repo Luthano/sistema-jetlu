@@ -56,11 +56,20 @@ export function matchCity(query, cidades) {
   return null
 }
 
+export async function buscarUfsCobertura() {
+  const res = await fetch('/api/cidades?meta=ufs')
+  const data = await res.json()
+  if (!data.sucesso) {
+    throw new Error(data.mensagem || 'Não foi possível listar as UFs.')
+  }
+  return Array.isArray(data.ufs) ? data.ufs : []
+}
+
 export async function buscarCidadesPorUf(uf) {
   const res = await fetch(`/api/cidades?uf=${encodeURIComponent(uf)}`)
   const data = await res.json()
   if (!data.sucesso) {
-    throw new Error(data.mensagem || 'Não foi possível consultar as cidades no SSW.')
+    throw new Error(data.mensagem || 'Não foi possível consultar as cidades.')
   }
   return data
 }
@@ -69,7 +78,7 @@ export async function buscarCidadesPorNome(cidade) {
   const res = await fetch(`/api/cidades?cidade=${encodeURIComponent(cidade)}`)
   const data = await res.json()
   if (!data.sucesso) {
-    throw new Error(data.mensagem || 'Não foi possível consultar as cidades no SSW.')
+    throw new Error(data.mensagem || 'Não foi possível consultar as cidades.')
   }
   return data
 }

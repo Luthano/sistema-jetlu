@@ -5,7 +5,7 @@ import express from 'express'
 import { cotar as cotarSimulacao, getMercadorias } from './sswClient.js'
 import { rastrearPorDanfe, rastrearPorDocumento } from './sswTracking.js'
 import { cotar as cotarOficial, solicitarColeta } from './sswCotacaoColeta.js'
-import { buscarCidadesPorNome, listarCidadesPorUf } from './sswCidades.js'
+import { buscarCidadesPorNome, listarCidadesPorUf, listarUfsCobertura } from './coberturaManual.js'
 import { podePersistirCotacao, salvarColetaHistorico, salvarCotacaoHistorico } from './supabase.js'
 import {
   listActiveCarriers,
@@ -56,6 +56,12 @@ app.get('/api/cidades', async (req, res) => {
   try {
     const uf = String(req.query.uf || '').trim()
     const cidade = String(req.query.cidade || '').trim()
+    const listarUfs = String(req.query.meta || '') === 'ufs'
+
+    if (listarUfs) {
+      const result = await listarUfsCobertura()
+      return res.json(result)
+    }
 
     if (uf) {
       const result = await listarCidadesPorUf(uf)

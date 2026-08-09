@@ -1,21 +1,15 @@
-/**
- * UFs disponíveis na consulta pública de cidades (Jetlu + Lopesul).
- */
-export const UFS_ATENDIDAS = [
-  'BA',
-  'ES',
-  'GO',
-  'MS',
-  'MT',
-  'PA',
-  'PE',
-  'PR',
-  'RJ',
-  'RS',
-  'SC',
-  'SP',
-  'TO',
+/** Todas as UFs do mapa (seleção no admin). */
+export const UFS_BRASIL = [
+  'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA',
+  'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN',
+  'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO',
 ]
+
+/**
+ * Fallback se a API de cobertura ainda não retornar UFs.
+ * Preferir sempre GET /api/cidades?meta=ufs
+ */
+export const UFS_ATENDIDAS = [...UFS_BRASIL]
 
 export const UF_MAPA_HREF = {
   acre: 'AC',

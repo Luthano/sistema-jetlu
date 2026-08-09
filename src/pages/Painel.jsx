@@ -8,6 +8,7 @@ import PainelUsuarios from './PainelUsuarios'
 import PainelCadastro from './PainelCadastro'
 import PainelDacte from './PainelDacte'
 import PainelEtiquetas from './PainelEtiquetas'
+import PainelCidadesAdmin from './PainelCidadesAdmin'
 import './AuthPages.css'
 import './Painel.css'
 
@@ -153,13 +154,28 @@ function PainelInicio({
 }
 
 function PainelCidades() {
+  const [ufs, setUfs] = useState([])
+
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/cidades?meta=ufs')
+      .then((res) => res.json())
+      .then((data) => {
+        if (!cancelled && Array.isArray(data.ufs)) setUfs(data.ufs)
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   return (
     <div className="painel-section">
       <header className="painel-section-head">
         <div>
           <p className="painel-eyebrow">Cidades</p>
           <h2>Cobertura Jetlu</h2>
-          <p>Estados atendidos e consulta completa de municípios.</p>
+          <p>Estados com municípios cadastrados e consulta completa.</p>
         </div>
         <Link to="/cidades-atendidas" className="painel-section-cta">
           Abrir consulta completa
@@ -167,7 +183,7 @@ function PainelCidades() {
       </header>
 
       <div className="painel-uf-grid">
-        {UFS_ATENDIDAS.map((uf) => (
+        {(ufs.length ? ufs : UFS_ATENDIDAS.slice(0, 8)).map((uf) => (
           <Link key={uf} to="/cidades-atendidas" className="painel-uf-card">
             <strong>{uf}</strong>
             <span>Ver cidades</span>
@@ -250,6 +266,7 @@ function Painel() {
     ]
     if (isMaster) {
       items.splice(5, 0, { id: 'usuarios', label: 'Usuários', icon: ICONS.users })
+      items.splice(7, 0, { id: 'cobertura', label: 'Cobertura', icon: ICONS.cities })
     }
     return items
   }, [isMaster])
@@ -303,7 +320,7 @@ function Painel() {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />
   }
 
-  if (!loading && user && section === 'usuarios' && !isMaster) {
+  if (!loading && user && (section === 'usuarios' || section === 'cobertura') && !isMaster) {
     return <Navigate to="/painel" replace />
   }
 
@@ -487,6 +504,12 @@ function Painel() {
           {isMaster && section === 'usuarios' && (
             <div className="painel-section">
               <PainelUsuarios masterId={user.id} />
+            </div>
+          )}
+
+          {isMaster && section === 'cobertura' && (
+            <div className="painel-section">
+              <PainelCidadesAdmin />
             </div>
           )}
 

@@ -17,6 +17,18 @@ function getAccessToken(req) {
   return header.slice(7).trim()
 }
 
+/** Cliente anon sem usuário (leitura pública RLS). */
+export function getPublicSupabase() {
+  const config = getConfig()
+  if (!config) return null
+  return createClient(config.url, config.anonKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  })
+}
+
 export async function getAuthedSupabase(req) {
   const config = getConfig()
   const token = getAccessToken(req)
