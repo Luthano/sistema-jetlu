@@ -102,6 +102,179 @@
   color: var(--jetlu-muted);
 }
 
+.cidades-campo-cidade-wrap {
+  position: relative;
+}
+
+.cidades-campo-cidade-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+  padding: 11px 12px;
+  border: 1px solid #d5dde5;
+  border-radius: 10px;
+  background: #fff;
+  color: var(--jetlu-ink);
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cidades-campo-cidade-trigger .is-placeholder {
+  color: var(--placeholder, #9aa3af);
+}
+
+.cidades-campo-cidade-hint {
+  flex-shrink: 0;
+  color: #8a94a0;
+  font-size: 0.75rem;
+}
+
+.cidades-popup-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background: rgba(6, 40, 85, 0.42);
+}
+
+.cidades-popup {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: min(920px, 100%);
+  max-height: min(82vh, 720px);
+  padding: 18px;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 24px 60px rgba(6, 40, 85, 0.28);
+}
+
+.cidades-popup-head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.cidades-popup-head h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  color: var(--jetlu-navy);
+  letter-spacing: -0.02em;
+}
+
+.cidades-popup-head .cidades-map-label {
+  margin-bottom: 4px;
+}
+
+.cidades-popup-fechar {
+  flex-shrink: 0;
+  padding: 8px 12px;
+  border: 1px solid #d5dde5;
+  border-radius: 999px;
+  background: #f8fafc;
+  color: var(--jetlu-navy);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cidades-popup-busca {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #d5dde5;
+  border-radius: 10px;
+  background: #fff;
+  color: var(--jetlu-ink);
+  font: inherit;
+}
+
+.cidades-popup-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  min-height: 0;
+  overflow: auto;
+  padding: 4px 2px 2px;
+}
+
+.cidades-suggest-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid #edf1f5;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: var(--jetlu-navy);
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cidades-suggest-item span:first-child {
+  min-width: 0;
+  line-height: 1.3;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.cidades-suggest-item:hover,
+.cidades-suggest-item:focus-visible {
+  border-color: #c5d4ef;
+  background: #eef3fb;
+  outline: none;
+}
+
+.cidades-suggest-item.is-selected {
+  border-color: #cfe3d3;
+  background: #eef6ef;
+  color: #1f5b2d;
+}
+
+.cidades-suggest-vazio {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 18px 8px;
+  color: #8a94a0;
+  font-size: 0.92rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+@media (max-width: 900px) {
+  .cidades-popup-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .cidades-popup {
+    max-height: 88vh;
+    padding: 14px;
+  }
+
+  .cidades-popup-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}
+
 .cidades-map-search select,
 .cidades-map-search input {
   width: 100%;
@@ -201,7 +374,32 @@
   border: 1px solid #e6ebf0;
 }
 
-.cidades-status strong {
+.cidades-status-unificado {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.cidades-status-unificado .cidades-selecionadas-grid {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.cidades-status-unificado .cidades-selecionadas-card {
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.cidades-status-unificado .cidades-map-note {
+  margin: 0;
+}
+
+.cidades-status-unificado .cidades-cta-inline {
+  margin-top: 2px;
+}
+
+.cidades-status .cidades-status-titulo strong {
   display: block;
   font-family: var(--font-display);
   font-size: 1.2rem;
@@ -213,7 +411,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 10px;
-  margin-bottom: 6px;
+  margin-bottom: 0;
 }
 
 .cidades-status-titulo .cidades-siglas {
@@ -221,7 +419,7 @@
 }
 
 .cidades-status p {
-  margin-bottom: 12px;
+  margin-bottom: 0;
   color: var(--jetlu-ink);
 }
 
@@ -267,8 +465,8 @@
 .cidades-lista {
   list-style: none;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 8px 16px;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 8px 12px;
   padding: 18px;
   border: 1px solid #e6ebf0;
   border-radius: 14px;
@@ -405,7 +603,7 @@
   }
 
   .cidades-lista {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     padding: 14px;
   }
 
