@@ -154,15 +154,25 @@ function CidadesAtendidas() {
       const siglasDiretas = intersecaoSiglas(siglasOrigem, siglasDestino)
 
       let tipo = 'nao'
+      let siglas = []
+      let redespacho = null
+
       if (origemMatch && destinoMatch && siglasDiretas.length) {
         tipo = 'direta'
-      } else if (origemMatch && destinoMatch && montarRedespacho(siglasOrigem, siglasDestino)) {
-        tipo = 'redespacho'
+        siglas = siglasDiretas
+      } else if (origemMatch && destinoMatch) {
+        redespacho = montarRedespacho(siglasOrigem, siglasDestino)
+        if (redespacho) {
+          tipo = 'redespacho'
+          siglas = [redespacho.coleta, redespacho.entrega]
+        }
       }
 
       setConsulta({
         tipo,
         atendida: tipo !== 'nao',
+        siglas,
+        redespacho,
         origem: {
           uf: origemUf,
           cidade: origemMatch ? cityName(origemMatch) : origemNome,
@@ -186,8 +196,24 @@ function CidadesAtendidas() {
     }
   }
 
+  function limparPesquisa() {
+    setUfOrigem('')
+    setCidadeOrigem('')
+    setUfDestino('')
+    setCidadeDestino('')
+    setConsulta(null)
+    setErro('')
+    setLoading(false)
+    setLoadingLista(false)
+    setMapaFoco('destino')
+  }
+
   async function handlePesquisar(event) {
     event.preventDefault()
+    if (consulta) {
+      limparPesquisa()
+      return
+    }
     await pesquisar()
   }
 
@@ -329,7 +355,7 @@ function CidadesAtendidas() {
                 </fieldset>
 
                 <button type="submit" className="cidades-cta" disabled={loading}>
-                  {loading ? 'Pesquisando…' : 'Pesquisar'}
+                  {loading ? 'Pesquisando…' : consulta ? 'Nova pesquisa' : 'Pesquisar'}
                 </button>
               </form>
               <p className="cidades-map-note">
@@ -349,7 +375,12 @@ function CidadesAtendidas() {
           <section className="cidades-wrap cidades-resultado" id="cidades-resultado">
             {consulta && (
               <div className={`cidades-status ${statusClass}`}>
-                <strong>{statusTitulo}</strong>
+                <div className="cidades-status-titulo">
+                  <strong>{statusTitulo}</strong>
+                  {consulta.atendida && consulta.siglas?.length ? (
+                    <SiglasBadges siglas={consulta.siglas} />
+                  ) : null}
+                </div>
                 <p>
                   {formatCityName(consulta.origem.cidade)} / {consulta.origem.uf}
                   {' → '}
@@ -380,53 +411,80 @@ function CidadesAtendidas() {
               </div>
             )}
 
-            {ufLista && (
-              <div id="cidades-lista-uf">
+            {consulta ? (
+              <div id="cidades-lista-uf" className="cidades-selecionadas">
                 <div className="cidades-resultado-head">
-                  <div>
-                    <p className="cidades-map-label">
-                      Cidades de {mapaFoco === 'origem' ? 'saída' : 'destino'}
-                    </p>
-                    <h2>
-                      {carregandoLista
-                        ? `Carregando cidades em ${ufLista}…`
-                        : `${cidadesDaUf.length} cidade${cidadesDaUf.length === 1 ? '' : 's'} em ${ufLista}`}
-                    </h2>
+                  <h2>Cidade selecionada</h2>
+                </div>
+                <div className="cidades-selecionadas-grid">
+                  <div className="cidades-selecionadas-card">
+                    <span className="cidades-lista-papel">Saída</span>
+                    <strong>
+                      {formatCityName(consulta.origem.cidade)}
+                      <span> / {consulta.origem.uf}</span>
+                    </strong>
+                  </div>
+                  <div className="cidades-selecionadas-seta" aria-hidden="true">
+                    →
+                  </div>
+                  <div className="cidades-selecionadas-card">
+                    <span className="cidades-lista-papel">Destino</span>
+                    <strong>
+                      {formatCityName(consulta.destino.cidade)}
+                      <span> / {consulta.destino.uf}</span>
+                    </strong>
                   </div>
                 </div>
-
-                {carregandoLista ? (
-                  <p className="cidades-map-note">Buscando cobertura cadastrada…</p>
-                ) : cidadesFiltradas.length === 0 ? (
-                  <p className="cidades-map-note">
-                    {cidadesDaUf.length === 0
-                      ? 'Nenhuma cidade cadastrada para esta UF.'
-                      : 'Nenhuma cidade encontrada com esse filtro.'}
-                  </p>
-                ) : (
-                  <ul className="cidades-lista">
-                    {cidadesFiltradas.map((item) => {
-                      const nome = cityName(item)
-                      const siglas = citySiglas(item)
-                      const selecionada =
-                        String(cidadeListaFiltro || '').trim().toLocaleLowerCase('pt-BR') ===
-                        nome.toLocaleLowerCase('pt-BR')
-                      return (
-                        <li key={`${ufLista}-${nome}-${siglas.join('-')}`} className={selecionada ? 'is-match' : ''}>
-                          <button
-                            type="button"
-                            className="cidades-lista-btn"
-                            onClick={() => escolherCidadeLista(nome)}
-                          >
-                            <span className="cidades-lista-nome">{formatCityName(nome)}</span>
-                            <SiglasBadges siglas={siglas} />
-                          </button>
-                        </li>
-                      )
-                    })}
-                  </ul>
-                )}
               </div>
+            ) : (
+              ufLista && (
+                <div id="cidades-lista-uf">
+                  <div className="cidades-resultado-head">
+                    <div>
+                      <p className="cidades-map-label">
+                        Cidades de {mapaFoco === 'origem' ? 'saída' : 'destino'}
+                      </p>
+                      <h2>
+                        {carregandoLista
+                          ? `Carregando cidades em ${ufLista}…`
+                          : `${cidadesDaUf.length} cidade${cidadesDaUf.length === 1 ? '' : 's'} em ${ufLista}`}
+                      </h2>
+                    </div>
+                  </div>
+
+                  {carregandoLista ? (
+                    <p className="cidades-map-note">Buscando cobertura cadastrada…</p>
+                  ) : cidadesFiltradas.length === 0 ? (
+                    <p className="cidades-map-note">
+                      {cidadesDaUf.length === 0
+                        ? 'Nenhuma cidade cadastrada para esta UF.'
+                        : 'Nenhuma cidade encontrada com esse filtro.'}
+                    </p>
+                  ) : (
+                    <ul className="cidades-lista">
+                      {cidadesFiltradas.map((item) => {
+                        const nome = cityName(item)
+                        const siglas = citySiglas(item)
+                        const selecionada =
+                          String(cidadeListaFiltro || '').trim().toLocaleLowerCase('pt-BR') ===
+                          nome.toLocaleLowerCase('pt-BR')
+                        return (
+                          <li key={`${ufLista}-${nome}-${siglas.join('-')}`} className={selecionada ? 'is-match' : ''}>
+                            <button
+                              type="button"
+                              className="cidades-lista-btn"
+                              onClick={() => escolherCidadeLista(nome)}
+                            >
+                              <span className="cidades-lista-nome">{formatCityName(nome)}</span>
+                              <SiglasBadges siglas={siglas} />
+                            </button>
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  )}
+                </div>
+              )
             )}
           </section>
         )}
