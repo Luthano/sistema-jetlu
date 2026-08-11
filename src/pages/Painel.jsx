@@ -98,7 +98,6 @@ function PainelInicio({
     <div className="painel-section">
       <header className="painel-section-head">
         <div>
-          <p className="painel-eyebrow">Início</p>
           <h2>Resumo da operação</h2>
           <p>Acompanhe atalhos e o movimento recente da sua conta.</p>
         </div>
@@ -173,7 +172,6 @@ function PainelCidades() {
     <div className="painel-section">
       <header className="painel-section-head">
         <div>
-          <p className="painel-eyebrow">Cidades</p>
           <h2>Cobertura Jetlu</h2>
           <p>Estados com municípios cadastrados e consulta completa.</p>
         </div>
@@ -199,7 +197,6 @@ function PainelAtendimento() {
     <div className="painel-section">
       <header className="painel-section-head">
         <div>
-          <p className="painel-eyebrow">Atendimento</p>
           <h2>Fale com a Jetlu</h2>
           <p>Canais para suporte comercial e operacional.</p>
         </div>
@@ -393,8 +390,7 @@ function Painel() {
             <span />
           </button>
           <div>
-            <p className="painel-eyebrow">{currentNav.label}</p>
-            <h1>Olá, bem-vindo</h1>
+            <h1>{currentNav.label}</h1>
           </div>
         </header>
 
@@ -430,7 +426,6 @@ function Painel() {
             <div className="painel-section">
               <header className="painel-section-head">
                 <div>
-                  <p className="painel-eyebrow">Rastreamento</p>
                   <h2>Localize sua encomenda</h2>
                   <p>Consulte por chave DANFE ou NF + CPF/CNPJ.</p>
                 </div>
@@ -447,7 +442,6 @@ function Painel() {
             <div className="painel-section">
               <header className="painel-section-head">
                 <div>
-                  <p className="painel-eyebrow">Cotações</p>
                   <h2>Frete e coleta</h2>
                   <p>Simule valores e acompanhe o histórico da conta.</p>
                 </div>
@@ -492,7 +486,6 @@ function Painel() {
             <div className="painel-section">
               <header className="painel-section-head">
                 <div>
-                  <p className="painel-eyebrow">Cadastro</p>
                   <h2>Dados da conta</h2>
                   <p>Mantenha telefone, documentos e endereço atualizados.</p>
                 </div>

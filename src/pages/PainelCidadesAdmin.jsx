@@ -219,15 +219,6 @@ function PainelCidadesAdmin() {
 
   return (
     <section className="painel-admin cob-admin">
-      <header className="painel-admin-head">
-        <div>
-          <h2>Cobertura de cidades</h2>
-          <p>
-            Cadastro manual por transportadora. A consulta pública usa apenas esta lista — sem SSW automático.
-          </p>
-        </div>
-      </header>
-
       {erro && (
         <p className="auth-alert" role="alert">
           {erro}

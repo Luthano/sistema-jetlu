@@ -93,7 +93,6 @@ function PainelUsuarios({ masterId, onChanged }) {
     <section className="painel-admin">
       <header className="painel-admin-head">
         <div>
-          <h2>Aprovação de usuários</h2>
           <p>Revise o cadastro e libere o acesso às cotações.</p>
         </div>
       </header>

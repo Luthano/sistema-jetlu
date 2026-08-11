@@ -457,7 +457,6 @@ function PainelEtiquetas() {
     <div className="painel-section etq-page">
       <header className="painel-section-head etq-page-head">
         <div>
-          <p className="painel-eyebrow">Etiquetas</p>
           <h2>Etiquetas de embarque</h2>
           <p>Importe XMLs da NF-e ou crie etiquetas manuais, com preview e exportação ZPL.</p>
         </div>

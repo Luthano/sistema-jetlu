@@ -231,7 +231,6 @@ function PainelDacte() {
     <div className="painel-section">
       <header className="painel-section-head">
         <div>
-          <p className="painel-eyebrow">DACTE</p>
           <h2>Impressão de CT-e</h2>
           <p>Consulte pela NF do remetente e imprima o DACTE ou baixe o XML no portal SSW. O histórico fica salvo na sua conta.</p>
         </div>

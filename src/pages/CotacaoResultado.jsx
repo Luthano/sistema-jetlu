@@ -150,7 +150,7 @@ function OfertaCard({
             </p>
           ) : (
             <button type="button" className="btn-primary btn-coleta" onClick={onSolicitarColeta}>
-              Solicitar coleta nesta transportadora
+              Solicitar coleta
             </button>
           )}
         </div>
