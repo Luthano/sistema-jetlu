@@ -28,6 +28,9 @@ function PainelCidadesAdmin() {
   const [busy, setBusy] = useState(true)
   const [saving, setSaving] = useState(false)
 
+  const [editId, setEditId] = useState('')
+  const [editNome, setEditNome] = useState('')
+  const [confirmLimparUf, setConfirmLimparUf] = useState(false)
   const [novaTransportadora, setNovaTransportadora] = useState({
     id: '',
     nome: '',
@@ -97,10 +100,48 @@ function PainelCidadesAdmin() {
     if (!carrierId) return
     setBusy(true)
     setErro('')
+    setEditId('')
+    setEditNome('')
+    setConfirmLimparUf(false)
     carregarCidades()
       .catch((error) => setErro(error.message || 'Erro ao carregar cidades.'))
       .finally(() => setBusy(false))
   }, [carrierId, uf, carregarCidades])
+
+  function abrirEdicao(item) {
+    setEditId(item.id)
+    setEditNome(item.cidade)
+    setErro('')
+    setInfo('')
+  }
+
+  function fecharEdicao() {
+    setEditId('')
+    setEditNome('')
+  }
+
+  async function salvarEdicao(event) {
+    event.preventDefault()
+    const cidade = normalizeCityLine(editNome)
+    if (!editId) return
+    if (cidade.length < 2) {
+      setErro('Informe o nome da cidade.')
+      return
+    }
+
+    setSaving(true)
+    setErro('')
+    setInfo('')
+    const { error } = await supabase.from('cobertura_cidades').update({ cidade }).eq('id', editId)
+    if (error) {
+      setErro(error.message || 'Não foi possível salvar a edição.')
+    } else {
+      setInfo(`Cidade atualizada para ${formatCityName(cidade)}.`)
+      fecharEdicao()
+      await carregarCidades()
+    }
+    setSaving(false)
+  }
 
   async function adicionarCidades(nomes) {
     const limpos = [...new Set(nomes.map(normalizeCityLine).filter((item) => item.length >= 2))]
@@ -151,21 +192,29 @@ function PainelCidadesAdmin() {
   }
 
   async function removerCidade(id) {
+    if (!window.confirm('Remover esta cidade da cobertura?')) return
     setSaving(true)
     setErro('')
     const { error } = await supabase.from('cobertura_cidades').delete().eq('id', id)
     if (error) setErro(error.message || 'Não foi possível remover.')
-    else await carregarCidades()
+    else {
+      if (editId === id) fecharEdicao()
+      await carregarCidades()
+    }
     setSaving(false)
   }
 
-  async function limparUf() {
+  function pedirConfirmacaoLimparUf() {
+    if (!carrierId || !uf || !cidades.length || saving) return
+    setConfirmLimparUf(true)
+  }
+
+  async function confirmarLimparUf() {
     if (!carrierId || !uf) return
-    if (!window.confirm(`Remover todas as ${cidades.length} cidade(s) de ${uf} nesta transportadora?`)) {
-      return
-    }
+    setConfirmLimparUf(false)
     setSaving(true)
     setErro('')
+    setInfo('')
     const { error } = await supabase
       .from('cobertura_cidades')
       .delete()
@@ -174,6 +223,7 @@ function PainelCidadesAdmin() {
     if (error) setErro(error.message || 'Não foi possível limpar a UF.')
     else {
       setInfo(`Cobertura de ${uf} limpa para ${carrier?.nome || carrierId}.`)
+      fecharEdicao()
       await carregarCidades()
     }
     setSaving(false)
@@ -323,10 +373,57 @@ function PainelCidadesAdmin() {
           </strong>
           <span>{carrier ? `${carrier.nome} · ${carrier.sigla}` : ''}</span>
         </div>
-        <button type="button" className="cob-link-danger" onClick={limparUf} disabled={saving || !cidades.length}>
+        <button
+          type="button"
+          className="painel-section-cta cob-btn-compact"
+          onClick={pedirConfirmacaoLimparUf}
+          disabled={saving || !cidades.length}
+        >
           Limpar UF
         </button>
       </div>
+
+      {confirmLimparUf && (
+        <div
+          className="cob-confirm-backdrop"
+          role="presentation"
+          onClick={() => !saving && setConfirmLimparUf(false)}
+        >
+          <div
+            className="cob-confirm"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="cob-confirm-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 id="cob-confirm-title">Limpar cobertura desta UF?</h3>
+            <p>
+              Isso remove <strong>todas as {cidades.length} cidade(s)</strong> de{' '}
+              <strong>{uf}</strong> em{' '}
+              <strong>{carrier ? `${carrier.nome} (${carrier.sigla})` : 'esta transportadora'}</strong>.
+              A ação não pode ser desfeita pelo painel.
+            </p>
+            <div className="cob-confirm-actions">
+              <button
+                type="button"
+                className="painel-section-cta is-ghost cob-btn-compact"
+                onClick={() => setConfirmLimparUf(false)}
+                disabled={saving}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="painel-section-cta cob-btn-compact"
+                onClick={confirmarLimparUf}
+                disabled={saving}
+              >
+                Sim, limpar UF
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {busy ? (
         <p className="painel-muted">Carregando…</p>
@@ -334,14 +431,52 @@ function PainelCidadesAdmin() {
         <p className="painel-muted">Nenhuma cidade nesta UF para a transportadora selecionada.</p>
       ) : (
         <ul className="cob-lista">
-          {cidadesFiltradas.map((item) => (
-            <li key={item.id}>
-              <span>{formatCityName(item.cidade)}</span>
-              <button type="button" onClick={() => removerCidade(item.id)} disabled={saving}>
-                Remover
-              </button>
-            </li>
-          ))}
+          {cidadesFiltradas.map((item) => {
+            const editando = editId === item.id
+            return (
+              <li key={item.id} className={editando ? 'is-editing' : ''}>
+                {editando ? (
+                  <form className="cob-edit-form" onSubmit={salvarEdicao}>
+                    <input
+                      value={editNome}
+                      onChange={(e) => setEditNome(e.target.value)}
+                      disabled={saving}
+                      autoFocus
+                      aria-label="Nome da cidade"
+                    />
+                    <div className="cob-edit-actions">
+                      <button type="submit" className="painel-section-cta cob-btn-compact" disabled={saving}>
+                        Salvar
+                      </button>
+                      <button
+                        type="button"
+                        className="painel-section-cta is-ghost cob-btn-compact"
+                        onClick={fecharEdicao}
+                        disabled={saving}
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        type="button"
+                        className="painel-section-cta cob-btn-compact"
+                        onClick={() => removerCidade(item.id)}
+                        disabled={saving}
+                      >
+                        Remover
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <>
+                    <span>{formatCityName(item.cidade)}</span>
+                    <button type="button" className="cob-edit-open" onClick={() => abrirEdicao(item)} disabled={saving}>
+                      Editar
+                    </button>
+                  </>
+                )}
+              </li>
+            )
+          })}
         </ul>
       )}
     </section>

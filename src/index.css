@@ -54,6 +54,140 @@ textarea {
 }
 
 /*
+  Hover suave padrão do sistema — transição + leve elevação nos CTAs.
+*/
+button,
+a.button,
+.painel-section-cta,
+.painel-sair,
+.painel-edit,
+.painel-cancel,
+.painel-danger-btn,
+.landing-cta,
+.btn-primary,
+.btn-ghost,
+.btn-text,
+.btn-coleta,
+.cidades-cta,
+.cidades-lista-btn,
+.etq-btn,
+.auth-submit,
+.auth-switch,
+.auth-back,
+.oferta-select,
+.veiculo-btn,
+.veiculo-btn-ghost,
+.historico-cta,
+.cob-edit-open {
+  transition:
+    background-color 0.22s ease,
+    border-color 0.22s ease,
+    color 0.22s ease,
+    box-shadow 0.22s ease,
+    transform 0.22s ease,
+    filter 0.22s ease,
+    opacity 0.22s ease;
+}
+
+.painel-section-cta:hover:not(:disabled):not(.is-ghost),
+.btn-primary:hover:not(:disabled),
+.btn-coleta:hover:not(:disabled),
+.landing-cta:hover:not(:disabled):not(.landing-cta-outline),
+.cidades-cta:hover:not(:disabled),
+.auth-submit:hover:not(:disabled),
+.veiculo-btn:hover:not(:disabled),
+.etq-btn.is-primary:hover:not(:disabled),
+.etq-btn.is-solid:hover:not(:disabled) {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+}
+
+.painel-section-cta:hover:not(:disabled):not(.is-ghost),
+.btn-primary:hover:not(:disabled),
+.cidades-cta:hover:not(:disabled),
+.auth-submit:hover:not(:disabled),
+.veiculo-btn:hover:not(:disabled) {
+  box-shadow: 0 12px 26px rgba(248, 0, 22, 0.3);
+}
+
+.painel-section-cta.is-ghost:hover:not(:disabled),
+.painel-sair:hover:not(:disabled),
+.painel-edit:hover:not(:disabled),
+.painel-cancel:hover:not(:disabled),
+.btn-ghost:hover:not(:disabled),
+.veiculo-btn-ghost:hover:not(:disabled),
+.etq-btn.is-ghost:hover:not(:disabled),
+.etq-btn:hover:not(:disabled):not(.is-primary):not(.is-solid) {
+  background-color: #f3f4f6;
+  transform: translateY(-1px);
+}
+
+.painel-danger-btn:hover:not(:disabled) {
+  background-color: rgba(248, 0, 22, 0.06);
+  transform: translateY(-1px);
+}
+
+.landing-cta-outline:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.auth-switch:hover:not(:disabled),
+.auth-back:hover:not(:disabled),
+.btn-text:hover:not(:disabled),
+.cob-edit-open:hover:not(:disabled) {
+  opacity: 0.82;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button,
+  a.button,
+  .painel-section-cta,
+  .painel-sair,
+  .painel-edit,
+  .painel-cancel,
+  .painel-danger-btn,
+  .landing-cta,
+  .btn-primary,
+  .btn-ghost,
+  .btn-text,
+  .btn-coleta,
+  .cidades-cta,
+  .cidades-lista-btn,
+  .etq-btn,
+  .auth-submit,
+  .auth-switch,
+  .auth-back,
+  .oferta-select,
+  .veiculo-btn,
+  .veiculo-btn-ghost,
+  .historico-cta,
+  .cob-edit-open {
+    transition:
+      background-color 0.15s ease,
+      border-color 0.15s ease,
+      color 0.15s ease,
+      opacity 0.15s ease;
+  }
+
+  .painel-section-cta:hover:not(:disabled),
+  .btn-primary:hover:not(:disabled),
+  .btn-coleta:hover:not(:disabled),
+  .landing-cta:hover:not(:disabled),
+  .cidades-cta:hover:not(:disabled),
+  .auth-submit:hover:not(:disabled),
+  .veiculo-btn:hover:not(:disabled),
+  .veiculo-btn-ghost:hover:not(:disabled),
+  .painel-sair:hover:not(:disabled),
+  .painel-edit:hover:not(:disabled),
+  .painel-cancel:hover:not(:disabled),
+  .painel-danger-btn:hover:not(:disabled),
+  .btn-ghost:hover:not(:disabled),
+  .etq-btn:hover:not(:disabled) {
+    transform: none;
+  }
+}
+
+/*
   Hint dos campos: cinza bem claro (não herdar a cor do texto digitado).
 */
 input::placeholder,
