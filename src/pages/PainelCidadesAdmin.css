@@ -145,3 +145,29 @@
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 640px) {
+  .cob-admin {
+    gap: 14px;
+  }
+
+  .cob-card {
+    padding: 14px;
+  }
+
+  .cob-list-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cob-list-head .painel-section-cta,
+  .cob-toolbar .painel-section-cta,
+  .cob-card .painel-section-cta {
+    width: 100%;
+  }
+
+  .cob-lista li {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}

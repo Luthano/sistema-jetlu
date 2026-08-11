@@ -239,4 +239,13 @@
   .menu-mobile {
     top: 64px;
   }
+
+  .page-shell {
+    padding: 14px 10px 32px;
+  }
+
+  .page-block {
+    border-radius: 14px;
+    padding: 14px 12px;
+  }
 }
