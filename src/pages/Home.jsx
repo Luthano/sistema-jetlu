@@ -70,8 +70,8 @@ function Home() {
             <Link to="/cotacao" className="landing-cta">
               Fazer cotação
             </Link>
-            <Link to="/rastrear" className="landing-cta landing-cta-outline">
-              Rastrear encomenda
+            <Link to="/cidades-atendidas" className="landing-cta landing-cta-outline">
+              Cidades Atendidas
             </Link>
           </div>
         </div>
@@ -195,17 +195,13 @@ function Home() {
                 <span className="landing-join-btn">Quero ser um franqueado</span>
               </div>
             </a>
-            <a
-              href="mailto:operacional@jetlu.com.br?subject=Cadastro%20de%20veiculo%20parceiro"
-              className="landing-join-card landing-join-photo"
-              style={{ backgroundImage: 'url(/home/banner-site-7.png)' }}
-            >
+            <Link to="/cadastrar-veiculo" className="landing-join-card landing-join-photo" style={{ backgroundImage: 'url(/home/banner-site-7.png)' }}>
               <div>
                 <h3>Cadastre seu veículo</h3>
                 <p>Transforme seu veículo em uma fonte de faturamento, sendo parceiro da Jetlu.</p>
                 <span className="landing-join-btn">Cadastrar veículo</span>
               </div>
-            </a>
+            </Link>
             <a
               href="mailto:comercial@jetlu.com.br?subject=Curriculo%20-%20Trabalhe%20na%20Jetlu"
               className="landing-join-card"

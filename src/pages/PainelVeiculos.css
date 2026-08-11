@@ -1,0 +1,33 @@
+.veiculos-admin .painel-admin-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.veiculo-notas {
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--painel-muted, #6b7280);
+}
+
+.veiculo-notas textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d7dde6;
+  border-radius: 10px;
+  font: inherit;
+  font-weight: 500;
+  resize: vertical;
+  min-height: 64px;
+}
+
+@media (max-width: 640px) {
+  .veiculos-admin .painel-admin-head .painel-section-cta {
+    width: 100%;
+  }
+}

@@ -13,6 +13,7 @@ import {
   resolveCnpjPagador,
 } from './sswCarriers.js'
 import { decodeHtmlEntities, mensagemSemCobertura } from './htmlEntities.js'
+import { salvarVeiculoParceiro, atualizarVeiculoParceiro, listarVeiculosParceiros, reivindicarVeiculosPorEmail } from './veiculosParceiros.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 dotenv.config({ path: path.resolve(__dirname, '../.env') })
@@ -28,6 +29,60 @@ app.get('/api/health', (_req, res) => {
 
 app.get('/api/transportadoras', (_req, res) => {
   res.json({ transportadoras: publicCarrierList() })
+})
+
+app.post('/api/veiculos', async (req, res) => {
+  try {
+    const result = await salvarVeiculoParceiro(req, req.body || {})
+    return res.status(result.sucesso ? 201 : 400).json(result)
+  } catch (error) {
+    console.error('Erro cadastro veículo:', error)
+    return res.status(500).json({
+      sucesso: false,
+      mensagem: error.message || 'Erro interno ao cadastrar veículo.',
+    })
+  }
+})
+
+app.get('/api/veiculos', async (req, res) => {
+  try {
+    const result = await listarVeiculosParceiros(req, { status: req.query.status })
+    return res.status(result.sucesso ? 200 : 401).json(result)
+  } catch (error) {
+    console.error('Erro listar veículos:', error)
+    return res.status(500).json({
+      sucesso: false,
+      mensagem: error.message || 'Erro interno ao listar veículos.',
+      veiculos: [],
+    })
+  }
+})
+
+app.patch('/api/veiculos/:id', async (req, res) => {
+  try {
+    const result = await atualizarVeiculoParceiro(req, req.params.id, req.body || {})
+    return res.status(result.sucesso ? 200 : 400).json(result)
+  } catch (error) {
+    console.error('Erro atualizar veículo:', error)
+    return res.status(500).json({
+      sucesso: false,
+      mensagem: error.message || 'Erro interno ao atualizar veículo.',
+    })
+  }
+})
+
+app.post('/api/veiculos/reivindicar', async (req, res) => {
+  try {
+    const result = await reivindicarVeiculosPorEmail(req)
+    return res.status(result.sucesso ? 200 : 401).json(result)
+  } catch (error) {
+    console.error('Erro reivindicar veículos:', error)
+    return res.status(500).json({
+      sucesso: false,
+      mensagem: error.message || 'Erro interno ao vincular veículos.',
+      vinculados: 0,
+    })
+  }
 })
 
 app.get('/api/mercadorias', async (req, res) => {

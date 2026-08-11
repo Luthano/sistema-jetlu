@@ -9,6 +9,7 @@ import PainelCadastro from './PainelCadastro'
 import PainelDacte from './PainelDacte'
 import PainelEtiquetas from './PainelEtiquetas'
 import PainelCidadesAdmin from './PainelCidadesAdmin'
+import PainelVeiculos from './PainelVeiculos'
 import './AuthPages.css'
 import './Painel.css'
 
@@ -76,6 +77,13 @@ const ICONS = {
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <path d="M3.5 12.5 12 4h6.5V10.5L10.5 20.5 3.5 12.5Z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
       <circle cx="15.2" cy="8.8" r="1.3" fill="none" stroke="currentColor" strokeWidth="1.6" />
+    </svg>
+  ),
+  truck: (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M3 7.5h11v9H3zM14 10.5h4.2L21 13.8V16.5h-7v-6Z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+      <circle cx="7" cy="17.5" r="1.6" fill="none" stroke="currentColor" strokeWidth="1.6" />
+      <circle cx="17.5" cy="17.5" r="1.6" fill="none" stroke="currentColor" strokeWidth="1.6" />
     </svg>
   ),
 }
@@ -258,6 +266,7 @@ function Painel() {
       { id: 'etiquetas', label: 'Etiquetas', icon: ICONS.tags },
       { id: 'cotacoes', label: 'Cotações', icon: ICONS.quote },
       { id: 'cidades', label: 'Cidades', icon: ICONS.cities },
+      { id: 'veiculos', label: 'Veículos', icon: ICONS.truck },
       { id: 'cadastro', label: 'Cadastro', icon: ICONS.profile },
       { id: 'atendimento', label: 'Atendimento', icon: ICONS.support },
     ]
@@ -491,6 +500,12 @@ function Painel() {
                 </div>
               </header>
               <PainelCadastro profile={profile} canDelete={!isMaster} onSaved={refreshProfile} />
+            </div>
+          )}
+
+          {!isRejected && section === 'veiculos' && (
+            <div className="painel-section">
+              <PainelVeiculos isMaster={isMaster} />
             </div>
           )}
 
