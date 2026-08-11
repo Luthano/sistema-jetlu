@@ -10,6 +10,7 @@ import PainelDacte from './PainelDacte'
 import PainelEtiquetas from './PainelEtiquetas'
 import PainelCidadesAdmin from './PainelCidadesAdmin'
 import PainelVeiculos from './PainelVeiculos'
+import PainelCotacoes from './PainelCotacoes'
 import './AuthPages.css'
 import './Painel.css'
 
@@ -139,11 +140,15 @@ function PainelInicio({
 
       {isApproved ? (
         <section className="painel-cards painel-cards-stats" aria-label="Indicadores">
-          <article className="painel-card is-stat">
+          <button
+            type="button"
+            className="painel-card is-stat is-clickable"
+            onClick={() => onNavigate('cotacoes')}
+          >
             <span>Cotações</span>
             <strong>{busy ? '…' : resumo.cotacoes}</strong>
-            <small>Total na conta</small>
-          </article>
+            <small>Ver histórico</small>
+          </button>
           <article className="painel-card is-stat">
             <span>Coletas</span>
             <strong>{busy ? '…' : resumo.coletas}</strong>
@@ -448,45 +453,13 @@ function Painel() {
           {!isRejected && section === 'etiquetas' && <PainelEtiquetas />}
 
           {!isRejected && section === 'cotacoes' && (
-            <div className="painel-section">
-              <header className="painel-section-head">
-                <div>
-                  <h2>Frete e coleta</h2>
-                  <p>Simule valores e acompanhe o histórico da conta.</p>
-                </div>
-                {canUseCotacao ? (
-                  <Link to="/cotacao" className="painel-section-cta">
-                    Nova cotação
-                  </Link>
-                ) : null}
-              </header>
-
-              <section className="painel-cards painel-cards-stats" aria-label="Resumo de cotações">
-                <article className="painel-card is-stat">
-                  <span>Cotações</span>
-                  <strong>{isApproved ? (busy ? '…' : resumo.cotacoes) : '—'}</strong>
-                  <small>Total na conta</small>
-                </article>
-                <article className="painel-card is-stat">
-                  <span>Coletas</span>
-                  <strong>{isApproved ? (busy ? '…' : resumo.coletas) : '—'}</strong>
-                  <small>Total na conta</small>
-                </article>
-                <article className="painel-card is-stat">
-                  <span>Último frete</span>
-                  <strong>{isApproved ? (busy ? '…' : formatMoney(resumo.ultimoFrete)) : '—'}</strong>
-                  <small>{resumo.ultimaData ? formatDate(resumo.ultimaData) : 'Sem registros'}</small>
-                </article>
-              </section>
-
-              {!canUseCotacao && (
-                <p className="auth-info">
-                  {profileComplete
-                    ? 'Sua conta ainda não foi aprovada para cotar.'
-                    : 'Complete o cadastro para solicitar acesso às cotações.'}
-                </p>
-              )}
-            </div>
+            <PainelCotacoes
+              canUseCotacao={canUseCotacao}
+              profileComplete={profileComplete}
+              isApproved={isApproved}
+              busyResumo={busy}
+              resumo={resumo}
+            />
           )}
 
           {!isRejected && section === 'cidades' && <PainelCidades />}
