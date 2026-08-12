@@ -15,6 +15,12 @@ function formatCityName(name) {
     .replace(/(^|[\s(/-])(\p{L})/gu, (_, sep, letter) => sep + letter.toLocaleUpperCase('pt-BR'))
 }
 
+function sortCidades(lista) {
+  return [...lista].sort((a, b) =>
+    String(a.cidade).localeCompare(String(b.cidade), 'pt-BR', { sensitivity: 'base' }),
+  )
+}
+
 function PainelCidadesAdmin() {
   const [carriers, setCarriers] = useState([])
   const [carrierId, setCarrierId] = useState('')
@@ -25,7 +31,8 @@ function PainelCidadesAdmin() {
   const [filtro, setFiltro] = useState('')
   const [erro, setErro] = useState('')
   const [info, setInfo] = useState('')
-  const [busy, setBusy] = useState(true)
+  const [loadingCarriers, setLoadingCarriers] = useState(true)
+  const [loadingCidades, setLoadingCidades] = useState(false)
   const [saving, setSaving] = useState(false)
 
   const [editId, setEditId] = useState('')
@@ -79,33 +86,43 @@ function PainelCidadesAdmin() {
     setCidades(data || [])
   }, [carrierId, uf])
 
-  async function recarregar() {
-    setBusy(true)
+  useEffect(() => {
+    let active = true
+    setLoadingCarriers(true)
     setErro('')
-    try {
-      await carregarCarriers()
-      await carregarCidades()
-    } catch (error) {
-      setErro(error.message || 'Não foi possível carregar a cobertura.')
-    } finally {
-      setBusy(false)
+    carregarCarriers()
+      .catch((error) => {
+        if (active) setErro(error.message || 'Não foi possível carregar as transportadoras.')
+      })
+      .finally(() => {
+        if (active) setLoadingCarriers(false)
+      })
+    return () => {
+      active = false
     }
-  }
+  }, [carregarCarriers])
 
   useEffect(() => {
-    recarregar()
-  }, [])
+    if (!carrierId) return undefined
 
-  useEffect(() => {
-    if (!carrierId) return
-    setBusy(true)
+    let active = true
+    setLoadingCidades(true)
     setErro('')
     setEditId('')
     setEditNome('')
     setConfirmLimparUf(false)
+
     carregarCidades()
-      .catch((error) => setErro(error.message || 'Erro ao carregar cidades.'))
-      .finally(() => setBusy(false))
+      .catch((error) => {
+        if (active) setErro(error.message || 'Erro ao carregar cidades.')
+      })
+      .finally(() => {
+        if (active) setLoadingCidades(false)
+      })
+
+    return () => {
+      active = false
+    }
   }, [carrierId, uf, carregarCidades])
 
   function abrirEdicao(item) {
@@ -132,13 +149,19 @@ function PainelCidadesAdmin() {
     setSaving(true)
     setErro('')
     setInfo('')
-    const { error } = await supabase.from('cobertura_cidades').update({ cidade }).eq('id', editId)
+    const { data, error } = await supabase
+      .from('cobertura_cidades')
+      .update({ cidade })
+      .eq('id', editId)
+      .select('id, cidade, uf, transportadora_id')
+      .maybeSingle()
+
     if (error) {
       setErro(error.message || 'Não foi possível salvar a edição.')
-    } else {
-      setInfo(`Cidade atualizada para ${formatCityName(cidade)}.`)
+    } else if (data) {
+      setCidades((prev) => sortCidades(prev.map((item) => (item.id === data.id ? data : item))))
+      setInfo(`Cidade atualizada para ${formatCityName(data.cidade)}.`)
       fecharEdicao()
-      await carregarCidades()
     }
     setSaving(false)
   }
@@ -164,18 +187,26 @@ function PainelCidadesAdmin() {
       cidade,
     }))
 
-    const { error } = await supabase.from('cobertura_cidades').upsert(rows, {
-      onConflict: 'transportadora_id,uf,cidade_norm',
-      ignoreDuplicates: false,
-    })
+    const { data, error } = await supabase
+      .from('cobertura_cidades')
+      .upsert(rows, {
+        onConflict: 'transportadora_id,uf,cidade_norm',
+        ignoreDuplicates: false,
+      })
+      .select('id, cidade, uf, transportadora_id')
 
     if (error) {
       setErro(error.message || 'Não foi possível salvar as cidades.')
     } else {
+      const salvas = data || []
+      setCidades((prev) => {
+        const mapa = new Map(prev.map((item) => [item.id, item]))
+        for (const item of salvas) mapa.set(item.id, item)
+        return sortCidades([...mapa.values()])
+      })
       setInfo(`${limpos.length} cidade(s) salva(s) em ${uf} · ${carrier?.sigla || carrierId}.`)
       setLote('')
       setNovaCidade('')
-      await carregarCidades()
     }
     setSaving(false)
   }
@@ -196,10 +227,12 @@ function PainelCidadesAdmin() {
     setSaving(true)
     setErro('')
     const { error } = await supabase.from('cobertura_cidades').delete().eq('id', id)
-    if (error) setErro(error.message || 'Não foi possível remover.')
-    else {
+    if (error) {
+      setErro(error.message || 'Não foi possível remover.')
+    } else {
+      setCidades((prev) => prev.filter((item) => item.id !== id))
       if (editId === id) fecharEdicao()
-      await carregarCidades()
+      setInfo('Cidade removida da cobertura.')
     }
     setSaving(false)
   }
@@ -220,11 +253,12 @@ function PainelCidadesAdmin() {
       .delete()
       .eq('transportadora_id', carrierId)
       .eq('uf', uf)
-    if (error) setErro(error.message || 'Não foi possível limpar a UF.')
-    else {
-      setInfo(`Cobertura de ${uf} limpa para ${carrier?.nome || carrierId}.`)
+    if (error) {
+      setErro(error.message || 'Não foi possível limpar a UF.')
+    } else {
+      setCidades([])
       fecharEdicao()
-      await carregarCidades()
+      setInfo(`Cobertura de ${uf} limpa para ${carrier?.nome || carrierId}.`)
     }
     setSaving(false)
   }
@@ -245,27 +279,37 @@ function PainelCidadesAdmin() {
 
     setSaving(true)
     setErro('')
-    const { error } = await supabase.from('transportadoras_cobertura').upsert(
-      {
-        id,
-        nome,
-        sigla,
-        ativo: true,
-        ordem: carriers.length + 1,
-      },
-      { onConflict: 'id' },
-    )
+    const { data, error } = await supabase
+      .from('transportadoras_cobertura')
+      .upsert(
+        {
+          id,
+          nome,
+          sigla,
+          ativo: true,
+          ordem: carriers.length + 1,
+        },
+        { onConflict: 'id' },
+      )
+      .select('id, nome, sigla, ativo, ordem')
+      .maybeSingle()
 
     if (error) {
       setErro(error.message || 'Não foi possível salvar a transportadora.')
-    } else {
+    } else if (data) {
+      setCarriers((prev) => {
+        const sem = prev.filter((item) => item.id !== data.id)
+        return [...sem, data].sort((a, b) => (a.ordem || 0) - (b.ordem || 0))
+      })
       setInfo(`Transportadora ${nome} (${sigla}) disponível.`)
       setNovaTransportadora({ id: '', nome: '', sigla: '' })
-      await carregarCarriers()
       setCarrierId(id)
     }
     setSaving(false)
   }
+
+  const toolbarBusy = loadingCarriers && !carriers.length
+  const showListaVazia = !loadingCidades && cidadesFiltradas.length === 0
 
   return (
     <section className="painel-admin cob-admin">
@@ -279,7 +323,11 @@ function PainelCidadesAdmin() {
       <div className="cob-toolbar">
         <label>
           <span>Transportadora</span>
-          <select value={carrierId} onChange={(e) => setCarrierId(e.target.value)} disabled={busy || !carriers.length}>
+          <select
+            value={carrierId}
+            onChange={(e) => setCarrierId(e.target.value)}
+            disabled={toolbarBusy || !carriers.length}
+          >
             {!carriers.length && <option value="">Nenhuma cadastrada</option>}
             {carriers.map((item) => (
               <option key={item.id} value={item.id}>
@@ -290,7 +338,7 @@ function PainelCidadesAdmin() {
         </label>
         <label>
           <span>UF</span>
-          <select value={uf} onChange={(e) => setUf(e.target.value)} disabled={busy}>
+          <select value={uf} onChange={(e) => setUf(e.target.value)} disabled={toolbarBusy}>
             {UFS_BRASIL.map((item) => (
               <option key={item} value={item}>
                 {item}
@@ -370,6 +418,7 @@ function PainelCidadesAdmin() {
         <div>
           <strong>
             {cidadesFiltradas.length} cidade(s) em {uf}
+            {loadingCidades ? ' · atualizando…' : ''}
           </strong>
           <span>{carrier ? `${carrier.nome} · ${carrier.sigla}` : ''}</span>
         </div>
@@ -377,7 +426,7 @@ function PainelCidadesAdmin() {
           type="button"
           className="painel-section-cta cob-btn-compact"
           onClick={pedirConfirmacaoLimparUf}
-          disabled={saving || !cidades.length}
+          disabled={saving || loadingCidades || !cidades.length}
         >
           Limpar UF
         </button>
@@ -425,12 +474,12 @@ function PainelCidadesAdmin() {
         </div>
       )}
 
-      {busy ? (
+      {loadingCidades && cidades.length === 0 ? (
         <p className="painel-muted">Carregando…</p>
-      ) : cidadesFiltradas.length === 0 ? (
+      ) : showListaVazia ? (
         <p className="painel-muted">Nenhuma cidade nesta UF para a transportadora selecionada.</p>
       ) : (
-        <ul className="cob-lista">
+        <ul className={`cob-lista${loadingCidades ? ' is-refreshing' : ''}`}>
           {cidadesFiltradas.map((item) => {
             const editando = editId === item.id
             return (

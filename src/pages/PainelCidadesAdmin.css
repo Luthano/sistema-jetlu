@@ -170,6 +170,11 @@
   gap: 8px;
 }
 
+.cob-lista.is-refreshing {
+  opacity: 0.72;
+  pointer-events: none;
+}
+
 .cob-lista li {
   display: flex;
   align-items: center;

@@ -595,8 +595,10 @@
   }
 
   .landing-hero-actions {
-    flex-direction: column;
-    width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: auto;
+    gap: 10px;
   }
 
   .landing-section {
@@ -604,9 +606,10 @@
   }
 
   .landing-cta {
-    width: 100%;
-    justify-content: center;
-    box-sizing: border-box;
+    width: auto;
+    min-height: 0;
+    padding: 10px 16px;
+    font-size: 0.86rem;
   }
 
   .landing-banner-cta {
@@ -615,11 +618,20 @@
 
   .landing-banner-cta-inner {
     flex-direction: column;
-    align-items: stretch;
+    align-items: flex-start;
+    gap: 14px;
   }
 
   .landing-banner-cta h2 {
     max-width: none;
+  }
+
+  .hub-banner-actions,
+  .hub-inline-cta {
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: auto;
+    gap: 10px;
   }
 
   .landing-about img {
