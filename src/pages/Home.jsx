@@ -5,8 +5,8 @@ import './HomeAnimations.css'
 import './HubLogistico.css'
 
 const STATS = [
-  { value: '600+', label: 'cidades atendidas na malha Jetlu' },
-  { value: '12+', label: 'estados + DF com cobertura ativa' },
+  { value: '900+', label: 'cidades atendidas na malha Jetlu' },
+  { value: '12', label: 'estados + DF com cobertura ativa' },
   { value: 'D+1', label: 'prazos ágeis em rotas estratégicas' },
   { value: '3', label: 'pilares: coleta, entrega e visão de negócio' },
 ]
@@ -36,8 +36,8 @@ const PILARES = [
 
 const BENEFICIOS = [
   {
-    title: 'Mais de 600 cidades',
-    text: 'Cobertura em 12 estados + DF para ampliar o alcance do seu embarque.',
+    title: 'Mais de 900 cidades',
+    text: 'Cobertura em 11 estados + DF para ampliar o alcance do seu embarque.',
   },
   {
     title: 'Coletas que poupam tempo',
@@ -65,7 +65,7 @@ const SOLUCOES = [
     image: '/home/banner-caixa.png',
   },
   {
-    title: 'Mais de 600 cidades',
+    title: 'Mais de 900 cidades',
     subtitle: 'Alcance nacional',
     image: '/home/banner-collage.png',
   },

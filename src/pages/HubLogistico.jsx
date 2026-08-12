@@ -5,8 +5,8 @@ import './HomeAnimations.css'
 import './HubLogistico.css'
 
 const STATS = [
-  { value: '600+', label: 'cidades atendidas na malha Jetlu' },
-  { value: '12+', label: 'estados + DF com cobertura ativa' },
+  { value: '900+', label: 'cidades atendidas na malha Jetlu' },
+  { value: '12', label: 'estados + DF com cobertura ativa' },
   { value: 'D+1', label: 'prazos ágeis em rotas estratégicas' },
   { value: '3', label: 'redes parceiras integradas à operação' },
 ]
