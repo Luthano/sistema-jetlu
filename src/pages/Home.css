@@ -554,6 +554,38 @@
   line-height: 1.25;
 }
 
+@media (max-width: 1100px) {
+  .landing-hero-actions,
+  .landing-about-actions,
+  .hub-inline-cta,
+  .hub-banner-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    width: auto;
+  }
+
+  .landing-cta {
+    width: auto !important;
+    max-width: max-content;
+    min-height: 0;
+    padding: 10px 16px;
+    font-size: 0.86rem;
+    white-space: nowrap;
+  }
+
+  .landing-join-btn {
+    width: auto;
+    padding: 9px 14px;
+    font-size: 0.82rem;
+  }
+
+  .landing-banner-cta-inner {
+    align-items: flex-start;
+  }
+}
+
 @media (max-width: 900px) {
   .landing-wrap,
   .landing-hero-content {
@@ -624,14 +656,6 @@
 
   .landing-banner-cta h2 {
     max-width: none;
-  }
-
-  .hub-banner-actions,
-  .hub-inline-cta {
-    flex-direction: row;
-    flex-wrap: wrap;
-    width: auto;
-    gap: 10px;
   }
 
   .landing-about img {
