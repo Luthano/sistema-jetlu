@@ -73,15 +73,17 @@
   align-items: center;
   justify-content: center;
   justify-self: start;
-  min-width: 220px;
-  padding: 14px 22px;
+  min-width: 0;
+  width: auto;
+  padding: 10px 16px;
   border: none;
-  border-radius: 999px;
+  border-radius: 10px;
   background: #f80016;
   color: #fff;
   font-weight: 700;
+  font-size: 0.88rem;
   cursor: pointer;
-  box-shadow: 0 10px 24px rgba(248, 0, 22, 0.35);
+  box-shadow: 0 8px 18px rgba(248, 0, 22, 0.22);
 }
 
 .rastreio-form .landing-cta:hover:not(:disabled) {
@@ -198,7 +200,12 @@
   }
 
   .rastreio-form .landing-cta {
-    width: 100%;
-    justify-self: stretch;
+    width: auto;
+    min-height: 0;
+    padding: 7px 12px;
+    font-size: 0.78rem;
+    border-radius: 8px;
+    box-shadow: none;
+    justify-self: start;
   }
 }

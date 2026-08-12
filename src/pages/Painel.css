@@ -751,23 +751,24 @@ a.painel-card {
 
   .painel-dacte-quick .painel-section-cta,
   .painel-dacte-actions .painel-section-cta,
-  .painel-dacte-actions .painel-cancel {
-    width: 100%;
-  }
-
-  .painel-cards,
-  .painel-support-grid,
-  .painel-uf-grid {
-    grid-template-columns: 1fr;
-  }
-
+  .painel-dacte-actions .painel-cancel,
   .painel-section-cta,
   .painel-sair,
   .painel-edit,
   .painel-cancel,
   .painel-danger-btn,
   .painel-cadastro .auth-submit {
-    width: 100%;
+    width: auto;
+    min-height: 0;
+    padding: 7px 12px;
+    font-size: 0.78rem;
+    box-shadow: none;
+  }
+
+  .painel-cards,
+  .painel-support-grid,
+  .painel-uf-grid {
+    grid-template-columns: 1fr;
   }
 
   .painel-card {

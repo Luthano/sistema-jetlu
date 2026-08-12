@@ -274,7 +274,11 @@
   .veiculo-actions .veiculo-btn,
   .veiculo-actions .veiculo-btn-ghost,
   .veiculo-btn {
-    width: 100%;
+    width: auto;
+    min-height: 0;
+    padding: 8px 14px;
+    font-size: 0.82rem;
+    box-shadow: none;
   }
 
   .veiculo-card {

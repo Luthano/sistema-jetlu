@@ -579,8 +579,12 @@
 
   .cidades-cta,
   .cidades-status-unificado .cidades-cta-inline {
-    width: 100%;
-    justify-content: center;
+    width: auto;
+    min-height: 0;
+    padding: 7px 12px;
+    font-size: 0.78rem;
+    border-radius: 8px;
+    box-shadow: none;
   }
 
   .cidades-resultado {

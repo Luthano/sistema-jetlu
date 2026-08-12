@@ -248,15 +248,20 @@
     padding: 14px;
   }
 
-  .cob-list-head {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
   .cob-list-head .painel-section-cta,
   .cob-toolbar .painel-section-cta,
-  .cob-card .painel-section-cta {
-    width: 100%;
+  .cob-card .painel-section-cta,
+  .cob-confirm-actions .painel-section-cta {
+    width: auto;
+    min-height: 0;
+    padding: 7px 12px !important;
+    font-size: 0.78rem !important;
+    box-shadow: none;
+  }
+
+  .cob-list-head {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .cob-edit-actions .painel-section-cta:last-child {
@@ -264,11 +269,9 @@
   }
 
   .cob-confirm-actions {
-    flex-direction: column-reverse;
-  }
-
-  .cob-confirm-actions .painel-section-cta {
-    width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-start;
   }
 
   .cob-lista li {
