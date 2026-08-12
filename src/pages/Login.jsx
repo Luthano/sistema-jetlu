@@ -4,7 +4,8 @@ import { useAuth } from '../context/AuthContext'
 import './AuthPages.css'
 
 function Login() {
-  const { configured, user, loading, signIn, signUp } = useAuth()
+  const { configured, user, loading, signIn, signUp, profileComplete, isMaster, isRejected, profile } =
+    useAuth()
   const location = useLocation()
   const redirectTo = location.state?.from || '/painel'
   const [modo, setModo] = useState('entrar')
@@ -15,7 +16,8 @@ function Login() {
   const [sending, setSending] = useState(false)
 
   if (!loading && user) {
-    return <Navigate to={redirectTo} replace />
+    const precisaCadastro = Boolean(profile) && !isMaster && !isRejected && !profileComplete
+    return <Navigate to={precisaCadastro ? '/painel/cadastro' : redirectTo} replace />
   }
 
   async function handleSubmit(event) {

@@ -1,18 +1,8 @@
 import { useEffect, useState } from 'react'
+import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import { formatCnpj, formatCpf, formatPhone, isProfileComplete, onlyDigits } from '../lib/profile'
 import PainelExcluirConta from './PainelExcluirConta'
-
-function emptyForm() {
-  return {
-    nome_completo: '',
-    endereco: '',
-    cpf: '',
-    cnpj: '',
-    telefone: '',
-    whatsapp: '',
-  }
-}
 
 function formFromProfile(profile) {
   return {
@@ -35,6 +25,7 @@ function ViewField({ label, value }) {
 }
 
 function PainelCadastro({ profile, canDelete = false, onSaved }) {
+  const { user } = useAuth()
   const completo = isProfileComplete(profile)
   const [editing, setEditing] = useState(!completo)
   const [form, setForm] = useState(() => formFromProfile(profile))
@@ -63,6 +54,12 @@ function PainelCadastro({ profile, canDelete = false, onSaved }) {
     setErro('')
     setInfo('')
 
+    const profileId = profile?.id || user?.id
+    if (!profileId) {
+      setErro('Perfil não carregado. Atualize a página e tente novamente.')
+      return
+    }
+
     if (String(form.nome_completo).trim().length < 3) {
       setErro('Informe o nome completo.')
       return
@@ -89,30 +86,47 @@ function PainelCadastro({ profile, canDelete = false, onSaved }) {
     }
 
     setSaving(true)
-    const { error } = await supabase
+    const payload = {
+      nome_completo: form.nome_completo.trim(),
+      endereco: form.endereco.trim(),
+      cpf: onlyDigits(form.cpf),
+      cnpj: onlyDigits(form.cnpj),
+      telefone: onlyDigits(form.telefone),
+      whatsapp: onlyDigits(form.whatsapp),
+    }
+
+    const { data, error } = await supabase
       .from('profiles')
-      .update({
-        nome_completo: form.nome_completo.trim(),
-        endereco: form.endereco.trim(),
-        cpf: onlyDigits(form.cpf),
-        cnpj: onlyDigits(form.cnpj),
-        telefone: onlyDigits(form.telefone),
-        whatsapp: onlyDigits(form.whatsapp),
-      })
-      .eq('id', profile.id)
+      .update(payload)
+      .eq('id', profileId)
+      .select(
+        'id, email, status, role, nome_completo, endereco, cpf, cnpj, telefone, whatsapp, created_at, approved_at, approved_by',
+      )
+      .maybeSingle()
 
     if (error) {
       const mensagem = String(error.message || '')
       setErro(
         /schema cache|column/i.test(mensagem)
-          ? 'Falta rodar o SQL de cadastro no Supabase (arquivo 005_fix_profiles_colunas.sql).'
+          ? 'Falta rodar o SQL de cadastro no Supabase (arquivo 012_profiles_cadastro_update.sql).'
           : mensagem || 'Não foi possível salvar seus dados.',
       )
-    } else {
-      setInfo(profile?.status === 'approved' ? 'Dados atualizados.' : 'Dados salvos. Aguarde a aprovação do master.')
-      setEditing(false)
-      await onSaved?.()
+      setSaving(false)
+      return
     }
+
+    if (!data) {
+      setErro(
+        'Não foi possível gravar o cadastro (nenhuma linha atualizada). Rode o SQL 012_profiles_cadastro_update.sql no Supabase e tente de novo.',
+      )
+      setSaving(false)
+      return
+    }
+
+    setInfo(data.status === 'approved' ? 'Dados atualizados.' : 'Dados salvos. Aguarde a aprovação do master.')
+    setForm(formFromProfile(data))
+    setEditing(false)
+    await onSaved?.()
     setSaving(false)
   }
 
@@ -191,12 +205,12 @@ function PainelCadastro({ profile, canDelete = false, onSaved }) {
         </form>
       ) : (
         <div className="painel-view-grid">
-          <ViewField label="Nome completo" value={profile.nome_completo} />
-          <ViewField label="Endereço" value={profile.endereco} />
-          <ViewField label="CPF" value={formatCpf(profile.cpf)} />
-          <ViewField label="CNPJ" value={formatCnpj(profile.cnpj)} />
-          <ViewField label="Telefone da conta" value={formatPhone(profile.telefone)} />
-          <ViewField label="WhatsApp" value={formatPhone(profile.whatsapp)} />
+          <ViewField label="Nome completo" value={profile?.nome_completo || form.nome_completo} />
+          <ViewField label="Endereço" value={profile?.endereco || form.endereco} />
+          <ViewField label="CPF" value={formatCpf(profile?.cpf || form.cpf)} />
+          <ViewField label="CNPJ" value={formatCnpj(profile?.cnpj || form.cnpj)} />
+          <ViewField label="Telefone da conta" value={formatPhone(profile?.telefone || form.telefone)} />
+          <ViewField label="WhatsApp" value={formatPhone(profile?.whatsapp || form.whatsapp)} />
           {info && <p className="auth-info">{info}</p>}
         </div>
       )}

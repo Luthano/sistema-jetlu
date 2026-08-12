@@ -21,7 +21,12 @@ function PainelExcluirConta({ email }) {
     setExcluindo(true)
     const { error } = await supabase.rpc('delete_own_account')
     if (error) {
-      setErro(error.message || 'Não foi possível excluir a conta.')
+      const mensagem = String(error.message || '')
+      setErro(
+        /function|schema cache|delete_own_account/i.test(mensagem)
+          ? 'Falta rodar o SQL de exclusão no Supabase (013_profiles_aprovacao_exclusao.sql).'
+          : mensagem || 'Não foi possível excluir a conta.',
+      )
       setExcluindo(false)
       return
     }

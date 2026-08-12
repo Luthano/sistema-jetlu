@@ -229,8 +229,86 @@
   color: var(--brand);
 }
 
+.user-card-actions .is-delete {
+  border: 1px solid #b91c1c;
+  background: #fff;
+  color: #b91c1c;
+}
+
 .user-card-actions button:disabled {
   opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.user-confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.48);
+}
+
+.user-confirm-modal {
+  width: min(100%, 420px);
+  display: grid;
+  gap: 12px;
+  padding: 20px;
+  border-radius: 16px;
+  background: #fff;
+  border: 1px solid var(--line);
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.22);
+}
+
+.user-confirm-modal h3 {
+  margin: 0;
+  color: var(--brand-deep);
+  font-size: 1.08rem;
+}
+
+.user-confirm-modal p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.45;
+  font-size: 0.92rem;
+}
+
+.user-confirm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.user-confirm-actions button {
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.user-confirm-cancel {
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--brand-deep);
+}
+
+.user-confirm-ok {
+  border: 0;
+  background: var(--brand-deep);
+  color: #fff;
+}
+
+.user-confirm-danger {
+  border: 0;
+  background: #b91c1c;
+  color: #fff;
+}
+
+.user-confirm-actions button:disabled {
+  opacity: 0.55;
   cursor: not-allowed;
 }
 

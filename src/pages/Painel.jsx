@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, Navigate, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
@@ -260,8 +260,31 @@ function Painel() {
   const [ultimaCotacao, setUltimaCotacao] = useState(null)
   const [erro, setErro] = useState('')
   const [busy, setBusy] = useState(true)
+  const [avisoCadastroAberto, setAvisoCadastroAberto] = useState(false)
+  const avisoLoginRef = useRef('')
 
   const section = resolveSection(location.pathname)
+
+  useEffect(() => {
+    if (!user) {
+      avisoLoginRef.current = ''
+      setAvisoCadastroAberto(false)
+      return undefined
+    }
+
+    if (loading || !profile || isMaster || isRejected) return undefined
+
+    if (profileComplete && isApproved) {
+      setAvisoCadastroAberto(false)
+      return undefined
+    }
+
+    if (avisoLoginRef.current === user.id) return undefined
+
+    avisoLoginRef.current = user.id
+    setAvisoCadastroAberto(true)
+    return undefined
+  }, [user, profile, loading, isMaster, isRejected, profileComplete, isApproved])
 
   const navItems = useMemo(() => {
     const items = [
@@ -331,6 +354,18 @@ function Painel() {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />
   }
 
+  if (
+    !loading &&
+    user &&
+    profile &&
+    !isMaster &&
+    !isRejected &&
+    !profileComplete &&
+    section !== 'cadastro'
+  ) {
+    return <Navigate to="/painel/cadastro" replace />
+  }
+
   if (!loading && user && (section === 'usuarios' || section === 'cobertura') && !isMaster) {
     return <Navigate to="/painel" replace />
   }
@@ -344,10 +379,46 @@ function Painel() {
     navigate(id === 'inicio' ? '/painel' : `/painel/${id}`)
   }
 
+  function fecharAvisoCadastro() {
+    setAvisoCadastroAberto(false)
+  }
+
+  function irParaCadastro() {
+    setAvisoCadastroAberto(false)
+    navigate('/painel/cadastro')
+  }
+
   const currentNav = navItems.find((item) => item.id === section) || navItems[0]
 
   return (
     <div className="painel-admin-shell">
+      {avisoCadastroAberto ? (
+        <div className="painel-aviso-backdrop" role="presentation" onClick={fecharAvisoCadastro}>
+          <div
+            className="painel-aviso-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="painel-aviso-cadastro-titulo"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h3 id="painel-aviso-cadastro-titulo">Complete o cadastro</h3>
+            <p>
+              {profileComplete
+                ? 'Seus dados foram enviados. Aguarde a aprovação do master para ter acesso às cotações.'
+                : 'Complete o cadastro da sua conta para ter acesso às cotações.'}
+            </p>
+            <div className="painel-aviso-actions">
+              <button type="button" className="painel-section-cta is-ghost" onClick={fecharAvisoCadastro}>
+                Fechar
+              </button>
+              <button type="button" className="painel-section-cta" onClick={irParaCadastro}>
+                {profileComplete ? 'Ver cadastro' : 'Completar cadastro'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       <aside className={`painel-sidebar ${menuOpen ? 'is-open' : ''}`}>
         <div className="painel-sidebar-brand">
           <img src="/home/icone-jetlu.svg" alt="" />
