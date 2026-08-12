@@ -9,6 +9,7 @@ import Login from './pages/Login'
 import Historico from './pages/Historico'
 import Painel from './pages/Painel'
 import CadastrarVeiculo from './pages/CadastrarVeiculo'
+import HubLogistico from './pages/HubLogistico'
 import SiteFooter from './components/SiteFooter'
 import './App.css'
 
@@ -17,6 +18,7 @@ const TABS = [
   { to: '/cotacao', label: 'Cotação', short: 'Cotação' },
   { to: '/rastrear', label: 'Rastrear', short: 'Rastrear' },
   { to: '/cidades-atendidas', label: 'Cidades atendidas', short: 'Cidades' },
+  { to: '/hub-logistico', label: 'Hub logístico', short: 'Hub' },
   { to: '/cadastrar-veiculo', label: 'Cadastrar veículo', short: 'Veículo' },
   { to: '/painel', label: 'Painel', short: 'Painel' },
 ]
@@ -147,6 +149,7 @@ function AppShell() {
           <Route path="/rastrear" element={<Rastrear />} />
           <Route path="/cotacao" element={<Cotacao />} />
           <Route path="/cidades-atendidas" element={<CidadesAtendidas />} />
+          <Route path="/hub-logistico" element={<HubLogistico />} />
           <Route path="/cadastrar-veiculo" element={<CadastrarVeiculo />} />
           <Route path="/login" element={<Login />} />
           <Route path="/painel/*" element={<Painel />} />

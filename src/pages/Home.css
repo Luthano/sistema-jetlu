@@ -38,7 +38,12 @@
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(90deg, rgba(6, 40, 85, 0.92) 0%, rgba(6, 40, 85, 0.72) 42%, rgba(248, 0, 22, 0.28) 100%);
+    linear-gradient(
+      105deg,
+      rgba(6, 40, 85, 0.94) 0%,
+      rgba(6, 40, 85, 0.78) 48%,
+      rgba(248, 0, 22, 0.34) 100%
+    );
 }
 
 .landing-hero-content {
@@ -394,7 +399,15 @@
   object-fit: contain;
 }
 
-/* Join */
+/* Solutions cards on home (hub rhythm) */
+.home-solution-cards {
+  margin-top: 4px;
+}
+
+.landing-join {
+  background: #fff;
+}
+
 .landing-join-grid {
   display: grid;
   grid-template-columns: 1.35fr 1fr;
@@ -562,11 +575,19 @@
   }
 
   .landing-hero {
-    min-height: 70vh;
+    min-height: min(72vh, 560px);
   }
 
   .landing-hero-content {
-    padding: 48px 0;
+    padding: 48px 0 40px;
+  }
+
+  .landing-hero h1 {
+    max-width: none;
+  }
+
+  .landing-hero-lead {
+    max-width: none;
   }
 
   .landing-hero-bg {
@@ -578,18 +599,91 @@
     width: 100%;
   }
 
+  .landing-section {
+    padding: 44px 0;
+  }
+
   .landing-cta {
     width: 100%;
     justify-content: center;
     box-sizing: border-box;
   }
 
+  .landing-banner-cta {
+    padding: 36px 0;
+  }
+
   .landing-banner-cta-inner {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
+  }
+
+  .landing-banner-cta h2 {
+    max-width: none;
   }
 
   .landing-about img {
     min-height: 240px;
+  }
+
+  .landing-partner-logos {
+    gap: 20px;
+  }
+
+  .landing-partner-logos img {
+    height: 72px;
+  }
+
+  .landing-join-card {
+    padding: 18px;
+  }
+
+  .home-solution-cards .landing-card {
+    min-height: 220px;
+  }
+}
+
+@media (max-width: 640px) {
+  .landing-wrap,
+  .landing-hero-content {
+    width: min(1180px, calc(100% - 20px));
+  }
+
+  .landing-hero {
+    min-height: 64vh;
+  }
+
+  .landing-hero-content {
+    padding: 36px 0 32px;
+  }
+
+  .landing-hero-logo {
+    width: min(180px, 58vw);
+    margin-bottom: 14px;
+  }
+
+  .landing-hero h1 {
+    font-size: clamp(1.45rem, 7vw, 1.85rem);
+  }
+
+  .landing-section {
+    padding: 36px 0;
+  }
+
+  .landing-section-head {
+    margin-bottom: 18px;
+  }
+
+  .landing-partner-logos img {
+    height: 58px;
+  }
+
+  .landing-join-featured,
+  .landing-join-photo {
+    min-height: 220px;
+  }
+
+  .landing-card {
+    min-height: 200px;
   }
 }
