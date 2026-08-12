@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Reveal from '../components/Reveal'
 import './Home.css'
@@ -70,6 +71,123 @@ const SOLUCOES = [
     image: '/home/banner-collage.png',
   },
 ]
+
+function SolutionCards({ items }) {
+  const trackRef = useRef(null)
+  const [active, setActive] = useState(0)
+  const activeRef = useRef(0)
+  const pausedRef = useRef(false)
+  const resumeTimerRef = useRef(null)
+
+  activeRef.current = active
+
+  function scrollToIndex(index) {
+    const track = trackRef.current
+    const card = track?.querySelectorAll('.landing-card')?.[index]
+    if (!track || !card) return
+    track.scrollTo({ left: card.offsetLeft, behavior: 'smooth' })
+  }
+
+  function pauseTemporarily(ms = 8000) {
+    pausedRef.current = true
+    clearTimeout(resumeTimerRef.current)
+    resumeTimerRef.current = setTimeout(() => {
+      pausedRef.current = false
+    }, ms)
+  }
+
+  useEffect(() => {
+    const track = trackRef.current
+    if (!track) return undefined
+
+    const updateActive = () => {
+      const cards = [...track.querySelectorAll('.landing-card')]
+      if (!cards.length) return
+      const mid = track.scrollLeft + track.clientWidth / 2
+      let idx = 0
+      cards.forEach((card, i) => {
+        if (card.offsetLeft <= mid) idx = i
+      })
+      setActive(idx)
+    }
+
+    track.addEventListener('scroll', updateActive, { passive: true })
+    updateActive()
+    return () => track.removeEventListener('scroll', updateActive)
+  }, [])
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 1024px)')
+    let timerId
+
+    const tick = () => {
+      if (!mq.matches || pausedRef.current || document.hidden) return
+      const next = (activeRef.current + 1) % items.length
+      scrollToIndex(next)
+    }
+
+    const syncTimer = () => {
+      clearInterval(timerId)
+      timerId = undefined
+      if (mq.matches) timerId = window.setInterval(tick, 4500)
+    }
+
+    syncTimer()
+    mq.addEventListener('change', syncTimer)
+    document.addEventListener('visibilitychange', syncTimer)
+
+    return () => {
+      clearInterval(timerId)
+      clearTimeout(resumeTimerRef.current)
+      mq.removeEventListener('change', syncTimer)
+      document.removeEventListener('visibilitychange', syncTimer)
+    }
+  }, [items.length])
+
+  function goTo(index) {
+    pauseTemporarily()
+    scrollToIndex(index)
+  }
+
+  return (
+    <div
+      className="home-solution-carousel"
+      onPointerEnter={() => {
+        pausedRef.current = true
+        clearTimeout(resumeTimerRef.current)
+      }}
+      onPointerLeave={() => {
+        pausedRef.current = false
+      }}
+      onTouchStart={() => pauseTemporarily()}
+    >
+      <div ref={trackRef} className="landing-cards home-solution-cards">
+        {items.map((item, index) => (
+          <Reveal key={item.title} delay={index * 80} as="article" className="landing-card">
+            <img src={item.image} alt="" />
+            <div className="landing-card-body">
+              <p>{item.subtitle}</p>
+              <h3>{item.title}</h3>
+            </div>
+          </Reveal>
+        ))}
+      </div>
+      <div className="home-solution-dots" role="tablist" aria-label="Soluções">
+        {items.map((item, index) => (
+          <button
+            key={item.title}
+            type="button"
+            role="tab"
+            className={`home-solution-dot${active === index ? ' is-active' : ''}`}
+            aria-label={`Ver ${item.title}`}
+            aria-selected={active === index}
+            onClick={() => goTo(index)}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
 
 const PASSOS = [
   {
@@ -276,17 +394,7 @@ function Home() {
             <h2>Soluções para empresas aceleradas</h2>
             <p className="landing-lead">Logística com visão, alinhada ao seu negócio.</p>
           </Reveal>
-          <div className="landing-cards home-solution-cards">
-            {SOLUCOES.map((item, index) => (
-              <Reveal key={item.title} delay={index * 80} as="article" className="landing-card">
-                <img src={item.image} alt="" />
-                <div className="landing-card-body">
-                  <p>{item.subtitle}</p>
-                  <h3>{item.title}</h3>
-                </div>
-              </Reveal>
-            ))}
-          </div>
+          <SolutionCards items={SOLUCOES} />
         </div>
       </section>
 
