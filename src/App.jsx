@@ -14,11 +14,11 @@ import SiteFooter from './components/SiteFooter'
 import './App.css'
 
 const TABS = [
-  { to: '/', label: 'Home', short: 'Home' },
+  { to: '/', label: 'Início', short: 'Início' },
+  { to: '/hub-logistico', label: 'Hub logístico', short: 'Hub' },
   { to: '/cotacao', label: 'Cotação', short: 'Cotação' },
   { to: '/rastrear', label: 'Rastrear', short: 'Rastrear' },
   { to: '/cidades-atendidas', label: 'Cidades atendidas', short: 'Cidades' },
-  { to: '/hub-logistico', label: 'Hub logístico', short: 'Hub' },
   { to: '/cadastrar-veiculo', label: 'Cadastrar veículo', short: 'Veículo' },
   { to: '/painel', label: 'Painel', short: 'Painel' },
 ]
