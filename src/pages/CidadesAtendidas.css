@@ -335,18 +335,18 @@
 }
 
 .cidades-sigla.is-jl {
-  background: #e8f0ff;
-  color: #062855;
+  background: var(--jetlu-navy, #062855);
+  color: #fff;
 }
 
 .cidades-sigla.is-ls {
-  background: #fff0f1;
-  color: #a6020c;
+  background: #b8d4f0;
+  color: #1a1c27;
 }
 
 .cidades-sigla.is-er {
-  background: #fff7e8;
-  color: #9a6b00;
+  background: var(--jetlu-red, #f80016);
+  color: #fff;
 }
 
 .cidades-status {
