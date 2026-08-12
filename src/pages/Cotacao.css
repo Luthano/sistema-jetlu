@@ -740,12 +740,32 @@
 
   .btn-primary,
   .btn-coleta {
-    width: auto;
-    max-width: none;
-    min-height: 0;
-    padding: 9px 14px;
-    font-size: 0.84rem;
-    box-shadow: none;
+    display: inline-flex !important;
+    width: fit-content !important;
+    max-width: 100%;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    height: auto !important;
+    align-self: flex-start !important;
+    justify-self: start !important;
+    padding: 8px 14px !important;
+    font-size: 0.8rem !important;
+    line-height: 1.2 !important;
+    border-radius: 999px;
+    box-shadow: none !important;
+  }
+
+  .aside-card form,
+  .aside-card {
+    display: grid;
+    justify-items: start;
+  }
+
+  .aside-card .resumo-list,
+  .aside-card h3,
+  .aside-card .resumo-note {
+    width: 100%;
+    justify-self: stretch;
   }
 
   .cotacao-bloqueio-link {

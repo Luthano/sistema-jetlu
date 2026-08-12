@@ -126,6 +126,7 @@
   display: grid;
   gap: 14px;
   align-content: start;
+  justify-items: start;
 }
 
 .hub-benefits-copy p {
@@ -560,7 +561,7 @@
 @media (max-width: 1100px) {
   .hub-urgency-inner {
     flex-wrap: wrap;
-    align-items: center;
+    align-items: flex-start;
     gap: 12px;
   }
 
@@ -568,21 +569,32 @@
   .hub-urgency .landing-cta,
   .hub-inline-cta .landing-cta,
   .hub-banner-actions .landing-cta,
-  .hub-benefits-copy .landing-cta {
-    width: auto !important;
-    max-width: none;
+  .hub-benefits-copy .landing-cta,
+  .hub-story-copy .landing-cta {
+    display: inline-flex !important;
+    width: fit-content !important;
+    max-width: 100%;
+    min-width: 0 !important;
     min-height: 0 !important;
     height: auto !important;
+    align-self: flex-start !important;
+    justify-self: start !important;
     padding: 7px 12px !important;
     font-size: 0.78rem !important;
     line-height: 1.2 !important;
     border-radius: 8px !important;
-    white-space: normal;
-    box-shadow: none;
+    white-space: nowrap;
+    box-shadow: none !important;
+  }
+
+  .hub-benefits-copy,
+  .hub-story-copy {
+    justify-items: start;
   }
 
   .hub-inline-cta,
   .hub-banner-actions {
+    display: flex;
     flex-direction: row;
     flex-wrap: wrap;
     width: auto;
