@@ -29,6 +29,23 @@ function requireClient() {
   return client
 }
 
+/** Contorna o limite padrão de 1000 linhas do PostgREST/Supabase. */
+async function selectAllRows(buildQuery, pageSize = 1000) {
+  const rows = []
+  let from = 0
+
+  while (true) {
+    const { data, error } = await buildQuery().range(from, from + pageSize - 1)
+    if (error) throw new Error(error.message || 'Falha ao consultar cobertura.')
+    if (!data?.length) break
+    rows.push(...data)
+    if (data.length < pageSize) break
+    from += pageSize
+  }
+
+  return rows
+}
+
 async function carregarTransportadorasAtivas() {
   const client = requireClient()
   const { data, error } = await client
@@ -43,8 +60,7 @@ async function carregarTransportadorasAtivas() {
 
 export async function listarUfsCobertura() {
   const client = requireClient()
-  const { data, error } = await client.from('cobertura_cidades').select('uf')
-  if (error) throw new Error(error.message || 'Falha ao listar UFs.')
+  const data = await selectAllRows(() => client.from('cobertura_cidades').select('uf').order('uf', { ascending: true }))
 
   const ufs = [...new Set((data || []).map((row) => normalizeUf(row.uf)).filter(Boolean))]
   ufs.sort((a, b) => a.localeCompare(b, 'pt-BR'))
@@ -71,13 +87,14 @@ export async function listarCidadesPorUf(ufRaw) {
   const carriers = await carregarTransportadorasAtivas()
   const siglaPorId = Object.fromEntries(carriers.map((c) => [c.id, c.sigla]))
 
-  const { data, error } = await client
-    .from('cobertura_cidades')
-    .select('cidade, transportadora_id, transportadoras_cobertura!inner(id, sigla, ativo)')
-    .eq('uf', uf)
-    .eq('transportadoras_cobertura.ativo', true)
-
-  if (error) throw new Error(error.message || 'Falha ao consultar cidades.')
+  const data = await selectAllRows(() =>
+    client
+      .from('cobertura_cidades')
+      .select('cidade, transportadora_id, transportadoras_cobertura!inner(id, sigla, ativo)')
+      .eq('uf', uf)
+      .eq('transportadoras_cobertura.ativo', true)
+      .order('cidade', { ascending: true }),
+  )
 
   const byCity = new Map()
   for (const row of data || []) {
@@ -132,12 +149,13 @@ export async function buscarCidadesPorNome(nomeRaw) {
   const client = requireClient()
   const carriers = await carregarTransportadorasAtivas()
 
-  const { data, error } = await client
-    .from('cobertura_cidades')
-    .select('uf, cidade, transportadora_id, transportadoras_cobertura!inner(sigla, ativo)')
-    .eq('transportadoras_cobertura.ativo', true)
-
-  if (error) throw new Error(error.message || 'Falha na busca de cidades.')
+  const data = await selectAllRows(() =>
+    client
+      .from('cobertura_cidades')
+      .select('uf, cidade, transportadora_id, transportadoras_cobertura!inner(sigla, ativo)')
+      .eq('transportadoras_cobertura.ativo', true)
+      .order('cidade', { ascending: true }),
+  )
 
   const matchesMap = new Map()
   for (const row of data || []) {
