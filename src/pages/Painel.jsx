@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, Navigate, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
+import { isProfileComplete } from '../lib/profile'
 import { UFS_ATENDIDAS } from '../lib/ufsAtendidas'
 import RastreioPanel from '../components/RastreioPanel'
 import PainelUsuarios from './PainelUsuarios'
@@ -262,8 +263,31 @@ function Painel() {
   const [busy, setBusy] = useState(true)
   const [avisoCadastroAberto, setAvisoCadastroAberto] = useState(false)
   const avisoLoginRef = useRef('')
+  const [aguardandoAprovacao, setAguardandoAprovacao] = useState(0)
 
   const section = resolveSection(location.pathname)
+
+  const carregarPendenciasAprovacao = useCallback(async () => {
+    if (!isMaster) {
+      setAguardandoAprovacao(0)
+      return
+    }
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, role, status, nome_completo, endereco, cpf, cnpj, telefone, whatsapp')
+      .eq('status', 'pending')
+
+    if (error) {
+      console.error('Erro ao carregar pendências de aprovação:', error.message)
+      return
+    }
+
+    const total = (data || []).filter(
+      (item) => item.role !== 'master' && isProfileComplete(item),
+    ).length
+    setAguardandoAprovacao(total)
+  }, [isMaster])
 
   useEffect(() => {
     if (!user) {
@@ -286,6 +310,13 @@ function Painel() {
     return undefined
   }, [user, profile, loading, isMaster, isRejected, profileComplete, isApproved])
 
+  useEffect(() => {
+    if (!isMaster || !user) return undefined
+    carregarPendenciasAprovacao()
+    const timer = window.setInterval(carregarPendenciasAprovacao, 30000)
+    return () => window.clearInterval(timer)
+  }, [isMaster, user, carregarPendenciasAprovacao, section])
+
   const navItems = useMemo(() => {
     const items = [
       { id: 'inicio', label: 'Início', icon: ICONS.home },
@@ -299,11 +330,16 @@ function Painel() {
       { id: 'atendimento', label: 'Atendimento', icon: ICONS.support },
     ]
     if (isMaster) {
-      items.splice(5, 0, { id: 'usuarios', label: 'Usuários', icon: ICONS.users })
+      items.splice(5, 0, {
+        id: 'usuarios',
+        label: 'Usuários',
+        icon: ICONS.users,
+        alertaAprovacao: aguardandoAprovacao > 0,
+      })
       items.splice(7, 0, { id: 'cobertura', label: 'Cobertura', icon: ICONS.cities })
     }
     return items
-  }, [isMaster])
+  }, [isMaster, aguardandoAprovacao])
 
   useEffect(() => {
     setMenuOpen(false)
@@ -434,9 +470,16 @@ function Painel() {
               key={item.id}
               to={item.id === 'inicio' ? '/painel' : `/painel/${item.id}`}
               end={item.id === 'inicio'}
-              className={({ isActive }) => `painel-nav-link ${isActive ? 'is-active' : ''}`}
+              className={({ isActive }) =>
+                `painel-nav-link ${isActive ? 'is-active' : ''}${item.alertaAprovacao ? ' has-alerta' : ''}`
+              }
+              title={
+                item.alertaAprovacao
+                  ? `${aguardandoAprovacao} cadastro(s) completo(s) aguardando aprovação`
+                  : undefined
+              }
             >
-              <span className="painel-nav-icon">{item.icon}</span>
+              <span className={`painel-nav-icon${item.alertaAprovacao ? ' is-alerta' : ''}`}>{item.icon}</span>
               {item.label}
             </NavLink>
           ))}
@@ -555,7 +598,7 @@ function Painel() {
 
           {isMaster && section === 'usuarios' && (
             <div className="painel-section">
-              <PainelUsuarios masterId={user.id} />
+              <PainelUsuarios masterId={user.id} onChanged={carregarPendenciasAprovacao} />
             </div>
           )}
 

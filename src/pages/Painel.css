@@ -102,6 +102,15 @@
   height: 20px;
 }
 
+.painel-nav-icon.is-alerta,
+.painel-nav-link.has-alerta .painel-nav-icon {
+  color: var(--painel-brand, #f80016);
+}
+
+.painel-nav-link.has-alerta {
+  color: var(--painel-deep);
+}
+
 .painel-sidebar-foot {
   padding: 12px 8px 4px;
   border-top: 1px solid var(--painel-line);
